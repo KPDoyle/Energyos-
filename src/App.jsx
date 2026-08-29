@@ -75,15 +75,21 @@ const profiles = {
   },
 };
 
-const navItems = [
-  { id: 'overview', label: 'Overview', icon: Grid2X2 },
-  { id: 'lifetime', label: 'Lifetime Value', icon: CircleDollarSign },
+const customerNavItems = [
+  { id: 'overview', label: 'Home', icon: Grid2X2 },
+  { id: 'lifetime', label: 'My Value', icon: CircleDollarSign },
   { id: 'optimise', label: 'Optimise', icon: Sparkles },
   { id: 'assets', label: 'Assets', icon: BatteryCharging },
-  { id: 'engineer', label: 'Engineer AI', icon: Cpu },
   { id: 'tariffs', label: 'Tariffs', icon: WalletCards },
-  { id: 'insights', label: 'Insights', icon: Activity },
-  { id: 'installer', label: 'Installer', icon: Users },
+  { id: 'engineer', label: 'Support', icon: Cpu },
+];
+
+const installerNavItems = [
+  { id: 'installer', label: 'Portfolio', icon: Grid2X2 },
+  { id: 'customers', label: 'Customers', icon: Users },
+  { id: 'opportunities', label: 'Opportunities', icon: Sparkles },
+  { id: 'engineer', label: 'Service', icon: Cpu },
+  { id: 'insights', label: 'Analytics', icon: Activity },
 ];
 
 const chart = {
@@ -174,7 +180,13 @@ function Logo() {
   );
 }
 
-function Sidebar({ active, setActive, open, setOpen }) {
+function Sidebar({ active, setActive, open, setOpen, role, setRole }) {
+  const navItems = role === 'installer' ? installerNavItems : customerNavItems;
+  const switchRole = (nextRole) => {
+    setRole(nextRole);
+    setActive(nextRole === 'installer' ? 'installer' : 'overview');
+    setOpen(false);
+  };
   return (
     <>
       <aside className={"sidebar " + (open ? 'open' : '')}>
@@ -182,8 +194,18 @@ function Sidebar({ active, setActive, open, setOpen }) {
           <Logo />
           <button className="icon-button sidebar-close" onClick={() => setOpen(false)} aria-label="Close menu"><X size={19} /></button>
         </div>
+
+        <div className="role-switcher" aria-label="EnergyOS workspace">
+          <button className={role==='customer'?'active':''} onClick={()=>switchRole('customer')}>
+            <Home size={14}/><span>Customer</span>
+          </button>
+          <button className={role==='installer'?'active':''} onClick={()=>switchRole('installer')}>
+            <Users size={14}/><span>EnergyOS Pro</span>
+          </button>
+        </div>
+
         <nav className="nav">
-          <div className="nav-caption">Workspace</div>
+          <div className="nav-caption">{role === 'installer' ? 'Installer workspace' : 'Customer workspace'}</div>
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -194,7 +216,7 @@ function Sidebar({ active, setActive, open, setOpen }) {
               >
                 <Icon size={18} strokeWidth={1.8} />
                 <span>{item.label}</span>
-                {item.id === 'optimise' && <span className="nav-badge">3</span>}
+                {role==='customer' && item.id === 'optimise' && <span className="nav-badge">3</span>}
               </button>
             );
           })}
@@ -203,15 +225,15 @@ function Sidebar({ active, setActive, open, setOpen }) {
         <div className="assurance-card">
           <div className="assurance-icon"><ShieldCheck size={18} /></div>
           <div>
-            <strong>Headroom software platform</strong>
-            <p>Independent energy intelligence across the asset lifecycle.</p>
+            <strong>{role==='installer'?'EnergyOS Pro':'Headroom EnergyOS'}</strong>
+            <p>{role==='installer'?'Manage customers, service and lifetime opportunities.':'Independent lifetime energy intelligence for your property.'}</p>
           </div>
         </div>
         <div className="profile-mini">
           <div className="avatar">KD</div>
           <div>
             <strong>Kevin Doyle</strong>
-            <span>Owner</span>
+            <span>{role==='installer'?'Installer workspace':'Customer workspace'}</span>
           </div>
           <Settings size={17} />
         </div>
@@ -221,31 +243,39 @@ function Sidebar({ active, setActive, open, setOpen }) {
   );
 }
 
-function Header({ profileKey, setProfileKey, onMenu, onSearch, onNotifications, unread }) {
+function Header({ profileKey, setProfileKey, onMenu, onSearch, onNotifications, unread, role }) {
   const [open, setOpen] = useState(false);
   const p = profiles[profileKey];
   return (
     <header className="topbar">
       <button className="icon-button menu-button" onClick={onMenu} aria-label="Open menu"><Menu size={20} /></button>
-      <div className="property-select-wrap">
-        <span className="eyebrow">Energy estate</span>
-        <button className="property-select" onClick={() => setOpen(!open)}>
-          <div className="property-dot"><Home size={15} /></div>
-          <div><strong>{p.name}</strong><span>{p.subtitle}</span></div>
-          <ChevronDown size={17} />
-        </button>
-        {open && (
-          <div className="property-menu">
-            {Object.entries(profiles).map(([key, item]) => (
-              <button key={key} onClick={() => { setProfileKey(key); setOpen(false); }}>
-                <div className="property-menu-icon">{item.type === 'Home' ? <Home size={17}/> : item.type === 'SME' ? <Building2 size={17}/> : <HousePlug size={17}/>}</div>
-                <div><strong>{item.name}</strong><span>{item.subtitle}</span></div>
-                {key === profileKey && <Check size={16} />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {role === 'installer' ? (
+        <div className="workspace-identity">
+          <span className="eyebrow">Headroom</span>
+          <strong>EnergyOS Pro</strong>
+          <small>Installer portfolio</small>
+        </div>
+      ) : (
+        <div className="property-select-wrap">
+          <span className="eyebrow">Energy estate</span>
+          <button className="property-select" onClick={() => setOpen(!open)}>
+            <div className="property-dot"><Home size={15} /></div>
+            <div><strong>{p.name}</strong><span>{p.subtitle}</span></div>
+            <ChevronDown size={17} />
+          </button>
+          {open && (
+            <div className="property-menu">
+              {Object.entries(profiles).map(([key, item]) => (
+                <button key={key} onClick={() => { setProfileKey(key); setOpen(false); }}>
+                  <div className="property-menu-icon">{item.type === 'Home' ? <Home size={17}/> : item.type === 'SME' ? <Building2 size={17}/> : <HousePlug size={17}/>}</div>
+                  <div><strong>{item.name}</strong><span>{item.subtitle}</span></div>
+                  {key === profileKey && <Check size={16} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="topbar-actions">
         <button className="search-button" onClick={onSearch}><Search size={17}/><span>Search</span><kbd>⌘K</kbd></button>
         <button className="icon-button notification" onClick={onNotifications} aria-label="Notifications"><Bell size={19}/>{unread > 0 && <span />}</button>
@@ -640,7 +670,7 @@ function Insights() {
   );
 }
 
-function Installer() {
+function Installer({ section='portfolio', onViewCustomer }) {
   const [customers, setCustomers] = usePersistentState('energyos-customers', defaultCustomers);
   const [showAll, setShowAll] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -659,26 +689,31 @@ function Installer() {
     setCampaignOpen(false);
   };
   const visible = showAll ? customers : customers.slice(0,5);
+  const heading = section==='customers'
+    ? ['Customer estate','Customers','Open any site to see performance, value, assets and service history.']
+    : section==='opportunities'
+      ? ['Commercial intelligence','Opportunities','Turn installed systems into qualified upgrade and service opportunities.']
+      : ['EnergyOS Pro','Installer portfolio','Manage the installed estate, service workload and lifetime customer value from one place.'];
   return (
     <div className="page">
-      <section className="page-heading"><div><span className="eyebrow green">Installer workspace</span><h1>Turn installed customers into lifetime customers.</h1><p>Monitor the fleet, triage service, protect warranties and surface qualified upgrade opportunities.</p></div><button className="primary-button" onClick={()=>setAdding(true)}><Users size={16}/> Add customer</button></section>
-      <div className="fleet-kpis">
+      <section className="page-heading"><div><span className="eyebrow green">{heading[0]}</span><h1>{heading[1]}</h1><p>{heading[2]}</p></div><button className="primary-button" onClick={()=>setAdding(true)}><Users size={16}/> Add customer</button></section>
+      {section!=='customers' && <div className="fleet-kpis">
         <div className="card"><span>Customers monitored</span><strong>{(3276+customers.length).toLocaleString()}</strong><small><ArrowUpRight/> live portfolio</small></div>
         <div className="card"><span>Recurring service value</span><strong>£68.4k</strong><small>annualised</small></div>
         <div className="card"><span>Qualified opportunities</span><strong>£412k</strong><small>estimated 12-month pipeline</small></div>
         <div className="card"><span>Open service cases</span><strong>18</strong><small>7 remotely resolved</small></div>
-      </div>
+      </div>}
       {campaigns.length>0 && <div className="report-status"><Check size={14}/> {campaigns.length} campaign{campaigns.length===1?'':'s'} created in this workspace</div>}
       <div className="installer-layout">
         <div className="card fleet-table">
           <div className="card-header"><div><span className="eyebrow">Customer fleet</span><h3>Priority accounts</h3></div><button className="ghost-button" onClick={()=>setShowAll(!showAll)}>{showAll?'Show priority':'View all'}</button></div>
           <div className="fleet-head"><span>Customer</span><span>EnergyOS</span><span>Status</span><span>Upside</span></div>
-          {visible.map((customer,index)=><div className="fleet-row" key={customer.name+'-'+index}><span><strong>{customer.name}</strong><small>{customer.system}</small></span><span><b>{customer.score}</b>/100</span><span className={customer.issue==='Optimised'?'positive':''}>{customer.issue}</span><strong>{customer.value}</strong></div>)}
+          {visible.map((customer,index)=><div className="fleet-row actionable" key={customer.name+'-'+index}><span><strong>{customer.name}</strong><small>{customer.system}</small></span><span><b>{customer.score}</b>/100</span><span className={customer.issue==='Optimised'?'positive':''}>{customer.issue}</span><span className="fleet-value"><strong>{customer.value}</strong>{customer.name==='Willow House'&&<button onClick={()=>onViewCustomer('home')}>View customer</button>}</span></div>)}
         </div>
-        <aside className="installer-side">
+        {section!=='customers' && <aside className="installer-side">
           <div className="card opportunity-card"><div className="card-header"><div>Next best opportunity</div><Sparkles size={18}/></div><span className="eyebrow green">Upgrade trigger</span><h2>412 customers are battery-ready</h2><p>They have sufficient export, suitable inverter configurations and modelled payback below 7 years.</p><strong>£1.16m</strong><span>estimated install revenue</span><button className="secondary-button full" onClick={()=>setCampaignOpen(true)}>Create campaign <ArrowRight size={15}/></button></div>
           <div className="card service-card"><div className="card-header"><div>Service triage</div><Activity size={18}/></div><div><span>Resolved remotely</span><strong>39%</strong></div><div><span>Engineer visits avoided</span><strong>14</strong></div><div><span>Avg. diagnostic time</span><strong>6m 18s</strong></div></div>
-        </aside>
+        </aside>}
       </div>
       {adding && <Modal title="Add customer" subtitle="Create a customer record in the local EnergyOS installer workspace." onClose={()=>setAdding(false)}>
         <form className="app-form" onSubmit={addCustomer}>
@@ -817,6 +852,7 @@ function EmptyPage({ title }) {
 }
 
 export default function App() {
+  const [role, setRole] = usePersistentState('energyos-role', 'customer');
   const [active, setActive] = usePersistentState('energyos-active-view', 'overview');
   const [profileKey, setProfileKey] = usePersistentState('energyos-profile', 'home');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -829,7 +865,14 @@ export default function App() {
     {id:3,title:'Asset health check complete',detail:'No critical faults detected across connected assets.',read:true,view:'assets'},
   ]);
   const profile = profiles[profileKey];
-  const unread = notifications.filter(n=>!n.read).length;
+
+  const installerAlerts = [
+    {id:'i1',title:'18 open service cases',detail:'7 have been resolved remotely.',read:false,view:'engineer'},
+    {id:'i2',title:'412 battery-ready customers',detail:'Qualified upgrade audience is ready to review.',read:false,view:'opportunities'},
+    {id:'i3',title:'Fleet performance updated',detail:'Portfolio analytics have been refreshed.',read:true,view:'insights'},
+  ];
+  const currentNotifications = role==='installer' ? installerAlerts : notifications;
+  const unread = currentNotifications.filter(n=>!n.read).length;
 
   useEffect(() => {
     const handler = (e) => {
@@ -842,55 +885,68 @@ export default function App() {
     return ()=>window.removeEventListener('keydown', handler);
   }, []);
 
+  const viewCustomer = (key='home') => {
+    setProfileKey(key);
+    setRole('customer');
+    setActive('overview');
+  };
+
   const content = useMemo(() => {
+    if (role==='installer') {
+      if (active === 'customers') return <Installer section="customers" onViewCustomer={viewCustomer}/>;
+      if (active === 'opportunities') return <Installer section="opportunities" onViewCustomer={viewCustomer}/>;
+      if (active === 'engineer') return <EngineerAI />;
+      if (active === 'insights') return <Insights />;
+      return <Installer section="portfolio" onViewCustomer={viewCustomer}/>;
+    }
     if (active === 'overview') return <Overview profile={profile} setActive={setActive}/>;
     if (active === 'lifetime') return <LifetimeValue profile={profile} />;
     if (active === 'optimise') return <Optimise />;
     if (active === 'assets') return <Assets />;
     if (active === 'engineer') return <EngineerAI />;
     if (active === 'tariffs') return <Tariffs />;
-    if (active === 'insights') return <Insights />;
-    if (active === 'installer') return <Installer />;
-    return <EmptyPage title="EnergyOS" />;
-  }, [active, profile]);
+    return <Overview profile={profile} setActive={setActive}/>;
+  }, [active, profile, role]);
 
+  const roleNav = role==='installer' ? installerNavItems : customerNavItems;
   const searchItems = [
-    ...navItems.map(n=>({label:n.label,detail:'Open '+n.label,view:n.id})),
-    ...assets.map(a=>({label:a.name,detail:a.model,view:'assets'})),
-    ...tariffOptions.map(t=>({label:t.name,detail:t.supplier,view:'tariffs'})),
-    ...defaultCustomers.slice(0,5).map(x=>({label:x.name,detail:x.system,view:'installer'})),
+    ...roleNav.map(n=>({label:n.label,detail:'Open '+n.label,view:n.id})),
+    ...(role==='customer' ? [
+      ...assets.map(a=>({label:a.name,detail:a.model,view:'assets'})),
+      ...tariffOptions.map(t=>({label:t.name,detail:t.supplier,view:'tariffs'}))
+    ] : defaultCustomers.map(x=>({label:x.name,detail:x.system,view:'customers'}))),
   ].filter(item => (item.label+' '+item.detail).toLowerCase().includes(query.toLowerCase()));
 
   const openNotification = (n) => {
-    setNotifications(current=>current.map(x=>x.id===n.id?{...x,read:true}:x));
+    if (role==='customer') setNotifications(current=>current.map(x=>x.id===n.id?{...x,read:true}:x));
     setNotificationsOpen(false);
     setActive(n.view);
   };
 
   return (
     <div className="app-shell">
-      <Sidebar active={active} setActive={setActive} open={menuOpen} setOpen={setMenuOpen}/>
+      <Sidebar active={active} setActive={setActive} open={menuOpen} setOpen={setMenuOpen} role={role} setRole={setRole}/>
       <main className="main-shell">
-        <Header profileKey={profileKey} setProfileKey={setProfileKey} onMenu={()=>setMenuOpen(true)} onSearch={()=>setSearchOpen(true)} onNotifications={()=>setNotificationsOpen(true)} unread={unread}/>
+        <Header profileKey={profileKey} setProfileKey={setProfileKey} onMenu={()=>setMenuOpen(true)} onSearch={()=>setSearchOpen(true)} onNotifications={()=>setNotificationsOpen(true)} unread={unread} role={role}/>
         {content}
       </main>
       <nav className="mobile-nav">
-        {navItems.slice(0,5).map(item => { const Icon=item.icon; return <button key={item.id} className={active===item.id?'active':''} onClick={()=>setActive(item.id)}><Icon size={18}/><span>{item.label}</span></button> })}
+        {roleNav.slice(0,5).map(item => { const Icon=item.icon; return <button key={item.id} className={active===item.id?'active':''} onClick={()=>setActive(item.id)}><Icon size={18}/><span>{item.label}</span></button> })}
       </nav>
 
-      {searchOpen && <Modal title="Search EnergyOS" subtitle="Jump to a workspace, asset, tariff or customer." onClose={()=>{setSearchOpen(false);setQuery('')}}>
+      {searchOpen && <Modal title={role==='installer'?'Search EnergyOS Pro':'Search EnergyOS'} subtitle={role==='installer'?'Find a customer, service area or installer workspace.':'Jump to a workspace, asset or tariff.'} onClose={()=>{setSearchOpen(false);setQuery('')}}>
         <div className="modal-search"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search…" autoFocus/></div>
         <div className="search-results">
           {searchItems.slice(0,10).map((item,index)=><button key={item.label+'-'+index} onClick={()=>{setActive(item.view);setSearchOpen(false);setQuery('')}}><div><strong>{item.label}</strong><span>{item.detail}</span></div><ArrowRight size={15}/></button>)}
-          {searchItems.length===0 && <p className="empty-state">No matching EnergyOS records.</p>}
+          {searchItems.length===0 && <p className="empty-state">No matching records.</p>}
         </div>
       </Modal>}
 
       {notificationsOpen && <Modal title="Notifications" subtitle={unread+' unread'} onClose={()=>setNotificationsOpen(false)}>
         <div className="notification-list">
-          {notifications.map(n=><button key={n.id} className={n.read?'read':''} onClick={()=>openNotification(n)}><span className="notification-dot"/><div><strong>{n.title}</strong><p>{n.detail}</p></div><ArrowRight size={15}/></button>)}
+          {currentNotifications.map(n=><button key={n.id} className={n.read?'read':''} onClick={()=>openNotification(n)}><span className="notification-dot"/><div><strong>{n.title}</strong><p>{n.detail}</p></div><ArrowRight size={15}/></button>)}
         </div>
-        <button className="secondary-button full" onClick={()=>setNotifications(current=>current.map(n=>({...n,read:true})))}>Mark all as read</button>
+        {role==='customer' && <button className="secondary-button full" onClick={()=>setNotifications(current=>current.map(n=>({...n,read:true})))}>Mark all as read</button>}
       </Modal>}
     </div>
   );
