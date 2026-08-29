@@ -832,3 +832,89 @@ button,input{min-width:0}
   .service-flow{grid-template-columns:1fr 1fr}
   .service-flow>.card:nth-child(even) svg{display:none}
 }
+
+
+/* Role-separated Customer EnergyOS / EnergyOS Pro */
+.role-switcher{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  margin:0 0 18px;
+  padding:4px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:4px;
+}
+.role-switcher button{
+  min-height:34px;
+  border:0;
+  border-radius:3px;
+  background:transparent;
+  color:#9eabba;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-size:8.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.role-switcher button svg{color:#75849a}
+.role-switcher button.active{
+  background:#fff;
+  color:var(--deep);
+}
+.role-switcher button.active svg{color:#9a7100}
+
+.workspace-identity{
+  display:grid;
+  grid-template-columns:auto auto;
+  column-gap:8px;
+  align-items:end;
+}
+.workspace-identity .eyebrow{grid-column:1/-1;margin-bottom:1px}
+.workspace-identity strong{
+  font-size:12px;
+  color:var(--deep);
+  line-height:1.1;
+}
+.workspace-identity small{
+  font-size:8px;
+  color:var(--muted);
+  align-self:center;
+}
+
+.fleet-row.actionable{align-items:center}
+.fleet-value{
+  display:flex!important;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px;
+}
+.fleet-value button{
+  border:0;
+  background:transparent;
+  color:#745700;
+  padding:0;
+  font-size:7.5px;
+  font-weight:700;
+  text-decoration:underline;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.fleet-value button:hover{color:#3f3000}
+
+@media(max-width:900px){
+  .role-switcher{margin-bottom:12px}
+  .workspace-identity{min-width:0}
+}
+@media(max-width:650px){
+  .workspace-identity strong{font-size:10.5px}
+  .workspace-identity small{display:none}
+  .fleet-value{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:2px;
+  }
+  .fleet-value button{font-size:7px}
+}
