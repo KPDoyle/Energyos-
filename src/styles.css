@@ -125,388 +125,134 @@ button{color:inherit}
 
 
 /* =========================================================
-   Headroom Platform Brand System
-   Uses the live Headroom brand asset and product architecture.
+   Headroom brand layer — original EnergyOS application layout
+   Keeps the preferred left-navigation/dashboard architecture.
    ========================================================= */
 :root{
-  --headroom-navy:#0b1730;
-  --headroom-navy-2:#122545;
-  --headroom-gold:#f1b72b;
-  --headroom-gold-soft:#f7cf66;
-  --headroom-cream:#f7f5ef;
-  --headroom-bluegrey:#dfe7ef;
-  --headroom-ink:#172235;
-  --headroom-muted:#657286;
-  --headroom-line:#d7dee7;
-  --ink:var(--headroom-ink);
-  --muted:var(--headroom-muted);
+  --ink:#172235;
+  --muted:#657286;
   --muted-2:#8792a1;
-  --line:var(--headroom-line);
+  --line:#d7dee7;
   --line-soft:#e8edf2;
   --paper:#f4f6f8;
   --card:#ffffff;
-  --deep:var(--headroom-navy);
+  --deep:#0b1730;
   --green:#4f9f68;
   --green-dark:#37754d;
   --green-soft:#e9f4ec;
-  --lime:var(--headroom-gold);
-  --amber:var(--headroom-gold);
+  --lime:#f1b72b;
+  --amber:#f1b72b;
   --amber-soft:#fff5dc;
-  --shadow:0 8px 28px rgba(11,23,48,.06);
+  --shadow:0 1px 2px rgba(11,23,48,.02),0 10px 28px rgba(11,23,48,.045);
 }
-html,body{background:var(--paper)}
-body{font-family:Arial,Helvetica,sans-serif;color:var(--headroom-ink)}
-button,input{font-family:Arial,Helvetica,sans-serif}
 
-/* Headroom masthead */
-.sidebar{
-  position:fixed;
-  inset:0 0 auto 0;
-  width:auto;
-  height:86px;
-  padding:0 34px;
-  background:var(--headroom-navy);
-  color:white;
+body{color:var(--ink);background:var(--paper)}
+.sidebar{background:var(--deep)}
+.sidebar-top{padding-bottom:24px}
+.logo-mark{display:none}
+.headroom-brand{
   display:flex;
-  flex-direction:row;
   align-items:center;
-  border-bottom:3px solid var(--headroom-gold);
-  z-index:60;
+  gap:10px;
+  width:100%;
+  color:white;
 }
-.sidebar-top{padding:0;margin-right:34px;display:flex;align-items:center}
-.headroom-brand{display:flex;align-items:center;gap:16px}
 .headroom-logo{
-  width:178px;
-  height:auto;
-  display:block;
+  width:116px;
+  max-height:32px;
   object-fit:contain;
+  object-position:left center;
+  display:block;
 }
 .headroom-product{
-  min-height:42px;
-  padding-left:15px;
-  border-left:1px solid rgba(255,255,255,.28);
+  min-height:31px;
+  padding-left:9px;
+  border-left:1px solid rgba(255,255,255,.24);
   display:flex;
   flex-direction:column;
   justify-content:center;
 }
 .headroom-product span{
-  font-size:8px;
+  display:block;
+  color:#9eabba;
+  font-size:7px;
   line-height:1;
   text-transform:uppercase;
-  letter-spacing:1.5px;
-  color:#aeb9ca;
-  margin-bottom:5px;
+  letter-spacing:1.1px;
+  margin-bottom:4px;
 }
 .headroom-product strong{
-  font-size:15px;
+  display:block;
+  color:#fff;
+  font-size:11px;
   line-height:1;
-  color:white;
   letter-spacing:-.2px;
 }
-.logo-mark{display:none}
-.nav{
-  display:flex;
-  flex-direction:row;
-  align-items:stretch;
-  gap:0;
-  height:86px;
-}
-.nav-caption{display:none}
-.nav-item{
-  height:86px;
-  padding:0 14px;
-  border:0;
-  border-radius:0;
-  background:transparent;
-  color:#c7d0dd;
-  gap:8px;
-  font-size:11.5px;
-  border-bottom:3px solid transparent;
-  margin-bottom:-3px;
-}
-.nav-item:hover{background:rgba(255,255,255,.04);color:white}
-.nav-item.active{
-  background:rgba(255,255,255,.05);
-  color:white;
-  border-bottom-color:var(--headroom-gold);
-}
-.nav-item.active svg,.nav-item svg{color:var(--headroom-gold)}
-.nav-badge{
-  background:var(--headroom-gold);
-  color:var(--headroom-navy);
-  border-radius:2px;
-  font-size:9px;
-  height:18px;
-}
-.sidebar-spacer{flex:1}
-.assurance-card{display:none}
-.profile-mini{
-  border:0;
-  padding:0;
-  width:auto;
-  grid-template-columns:32px 1fr 17px;
-  color:#bfc9d6;
-}
-.avatar{
-  width:32px;height:32px;border-radius:2px;
-  background:var(--headroom-gold);
-  color:var(--headroom-navy);
-  font-weight:800;
-}
-.profile-mini strong{color:white}
-.profile-mini span{color:#9caabd}
-.main-shell{margin-left:0;padding-top:86px}
+.nav-item.active svg{color:var(--lime)}
+.nav-badge{background:var(--lime);color:var(--deep)}
+.assurance-card{background:#101f3b;border-color:#203253}
+.assurance-icon{background:#172b4f;color:var(--lime)}
+.assurance-card strong{color:#eef2f7}
+.assurance-card p{color:#9cabbc}
+.avatar{background:var(--lime);color:var(--deep)}
+.profile-mini strong{color:#eef2f7}
+.profile-mini span{color:#8e9cad}
 
-/* Secondary product bar */
-.topbar{
-  height:64px;
-  padding:0 34px;
-  top:0;
-  background:#fff;
-  border-bottom:1px solid var(--headroom-line);
-  box-shadow:0 3px 14px rgba(11,23,48,.035);
-}
-.property-dot{
-  border-radius:2px;
-  border-color:#cbd4df;
-  background:#f7f9fb;
-  color:var(--headroom-navy);
-}
-.property-select strong{color:var(--headroom-navy)}
-.property-menu{
-  border-radius:3px;
-  border-color:#cbd4df;
-  box-shadow:0 16px 40px rgba(11,23,48,.13);
-}
-.property-menu button{border-radius:2px}
-.property-menu-icon{border-radius:2px;background:#eef2f6;color:var(--headroom-navy)}
-.search-button,.icon-button{
-  border-radius:2px;
-  border-color:#cbd4df;
-}
-.search-button{background:#f8fafb}
-.notification span{background:var(--headroom-gold)}
-
-/* Type hierarchy */
-.page{max-width:1440px;padding:40px 36px 72px}
-.page-heading{
-  margin-bottom:25px;
-  align-items:flex-end;
-}
-.page-heading h1{
-  font:700 34px/1.08 Arial,Helvetica,sans-serif;
-  letter-spacing:-1.45px;
-  color:var(--headroom-navy);
-}
-.page-heading p{
-  font-size:12px;
-  color:var(--headroom-muted);
-  line-height:1.55;
-  max-width:720px;
-}
-.eyebrow{
-  font-size:8.5px;
-  letter-spacing:1.35px;
-  color:#7a8697;
-}
-.eyebrow.green{color:#9b6d00}
-.status-pill,.independent-chip{
-  border-radius:2px;
-  border-color:#ccd5df;
-  color:#445369;
-}
-.status-pill span{background:#56a36f;box-shadow:0 0 0 3px #e9f5ed}
-
-/* Core surfaces */
-.card{
-  border-color:var(--headroom-line);
-  border-radius:4px;
-  box-shadow:var(--shadow);
-}
-.hero-grid{gap:12px}
-.score-card,.value-card,.live-card{min-height:220px}
-.score-progress{stroke:var(--headroom-gold)}
+.topbar{background:rgba(244,246,248,.94)}
+.property-dot{color:var(--deep)}
+.page-heading h1,.section-heading h2{color:var(--deep)}
+.eyebrow.green{color:#8b6500}
+.status-pill span{background:#4f9f68}
+.score-progress{stroke:var(--lime)}
 .score-copy .grade{
-  border-radius:2px;
-  background:#fff3ce;
-  color:#755400;
+  background:#fff1c7;
+  color:#795900;
+  border-radius:4px;
 }
-.text-link{color:#8b6300}
+.text-link{color:#7a5a00}
 .saving-strip{
-  border-radius:2px;
   background:#fff4d4;
   color:#6f560a;
-  border-left:3px solid var(--headroom-gold);
+  border-left:3px solid var(--lime);
 }
 .saving-strip svg,.saving-strip strong{color:#725300}
-.live-card{background:linear-gradient(180deg,#fff 0%,#f8fafc 100%)}
-.flow-node{border-radius:3px}
-.flow-node svg{color:var(--headroom-gold)}
-.flow-center{
-  border-radius:3px;
-  background:var(--headroom-navy);
-  box-shadow:0 0 0 6px #e9edf2;
-}
-.flow-center svg{color:var(--headroom-gold)}
-.flow-lines span{background:var(--headroom-gold)}
-.flow-node.compact{border-radius:3px}
-
-/* Headroom product/workflow language */
-.section-heading h2{
-  color:var(--headroom-navy);
-  font:700 19px/1.2 Arial,Helvetica,sans-serif;
-}
-.ghost-button{
-  border-radius:2px;
-  border-color:#ccd5df;
-  color:#425169;
-}
-.pillar-grid{gap:10px}
-.pillar-card{border-radius:4px}
+.flow-center{background:var(--deep)}
+.flow-center svg{color:var(--lime)}
+.flow-node svg{color:var(--lime)}
 .pillar-icon,.action-icon,.asset-icon,.small-icon,.answer-icon{
-  border-radius:3px;
   background:#fff4d4;
-  color:#8b6200;
+  color:#8a6200;
 }
-.pillar-title>div>strong{color:var(--headroom-navy)}
-.good{color:#477f5a}
-.mini-chart.generation{color:#d7a117}
-.mini-chart.consumption{color:#71849d}
-.tariff-bars span{background:#e5ebf1}
+.mini-chart.generation{color:#d0a024}
 .tariff-bars span:nth-last-child(3),.tariff-bars span:nth-last-child(4){background:#e0b84e}
-.health-assets i b,.asset-health i b,.confidence b,.health-score i b{background:#d2a326}
+.health-assets i b,.asset-health i b,.confidence b,.health-score i b{background:#d3a629}
 
-/* Headroom calls-to-action */
-.primary-button,.secondary-button{
-  border-radius:2px;
-  text-transform:uppercase;
-  letter-spacing:.55px;
-  font-size:9px;
-  font-weight:700;
-}
 .primary-button{
-  border-color:var(--headroom-gold);
-  background:var(--headroom-gold);
-  color:var(--headroom-navy);
+  background:var(--lime);
+  border-color:var(--lime);
+  color:var(--deep);
 }
-.primary-button:hover{background:var(--headroom-gold-soft)}
-.secondary-button{
-  border-color:var(--headroom-navy);
-  color:var(--headroom-navy);
-}
-.segmented{border-radius:2px}
-.segmented button{border-radius:1px}
-.segmented button.active{background:var(--headroom-navy);color:white}
-
-/* Optimisation */
-.optimise-summary{border-radius:4px}
-.optimise-summary strong{color:var(--headroom-navy)}
-.decision-head>svg{color:var(--headroom-gold)}
-.decision-head span{color:#8b6400}
-.decision-head h2{color:var(--headroom-navy)}
-.decision-answer{
-  border-radius:3px;
-  background:var(--headroom-navy);
-}
-.decision-answer b{color:var(--headroom-gold)}
-.toggle.on{background:var(--headroom-gold)}
-.optimise-table{border-radius:4px}
-.table-row button{border-radius:2px}
+.primary-button:hover{background:#f5c64c}
+.secondary-button{border-color:#b9c5d2;color:var(--deep)}
+.segmented button.active{background:var(--deep);color:#fff}
+.decision-head>svg{color:var(--lime)}
+.decision-head span{color:#896300}
+.decision-answer{background:var(--deep)}
+.decision-answer b{color:var(--lime)}
+.toggle.on{background:var(--lime)}
 .table-row.applied{background:#fff9e8}
+.asset-row.selected{border-color:#d9ba5a;box-shadow:0 0 0 1px #efe2ad}
+.tariff-answer{border-left:4px solid var(--lime)}
+.tariff-row.best{border-color:#d9be65;box-shadow:0 0 0 1px #efe3b5}
+.best-pill{background:#fff0bc;color:#705300}
+.insight-hero h2 em{color:#8a6300}
+.leaf-stat{background:#eef3f7;color:#6d7f95}
+.opportunity-card{border-top:3px solid var(--lime)}
 
-/* Asset operations */
-.asset-row,.asset-detail{border-radius:4px}
-.asset-row.selected{
-  border-color:#d8b64e;
-  box-shadow:inset 4px 0 0 var(--headroom-gold);
-}
-.asset-status{border-radius:2px}
-.warranty-card{border-radius:3px}
-
-/* Tariffs */
-.tariff-answer{
-  border-left:4px solid var(--headroom-gold);
-}
-.tariff-row.best{
-  border-color:#dbc05f;
-  box-shadow:inset 4px 0 0 var(--headroom-gold);
-}
-.current-pill,.best-pill{border-radius:2px}
-.best-pill{background:#fff0bc;color:#6d5100}
-.assumptions{border-radius:4px}
-
-/* Insights & installer */
-.insight-hero h2,.metric-panel>strong,.fleet-kpis strong,.opportunity-card h2,.opportunity-card>strong{
-  color:var(--headroom-navy);
-}
-.leaf-stat{border-radius:3px;background:#eef3f7;color:#687b93}
-.insight-list i{border-radius:3px;background:#fff4d4;color:#8b6200}
-.opportunity-card{border-top:3px solid var(--headroom-gold)}
-.fleet-table,.opportunity-card,.service-card{border-radius:4px}
-
-/* Footer-like suite cue on large screens */
-.page:after{
-  content:"HEADROOM · THE OPERATING SYSTEM FOR RENEWABLE DEPLOYMENT";
-  display:block;
-  margin-top:56px;
-  padding-top:16px;
-  border-top:1px solid #d9e0e8;
-  color:#8a95a5;
-  font-size:8px;
-  letter-spacing:1.35px;
-}
-
-/* Mobile */
-@media(max-width:1180px){
-  .sidebar{padding:0 18px}
-  .headroom-logo{width:150px}
-  .headroom-product{display:none}
-  .sidebar-top{margin-right:18px}
-  .nav-item{padding:0 10px;font-size:10.5px}
-  .profile-mini>div:not(.avatar){display:none}
-}
 @media(max-width:900px){
-  .sidebar{
-    inset:0 auto 0 0;
-    width:278px;height:100vh;
-    padding:20px 16px;
-    flex-direction:column;
-    align-items:stretch;
-    border-right:3px solid var(--headroom-gold);
-    border-bottom:0;
-    transform:translateX(-100%);
-  }
-  .sidebar.open{transform:translateX(0)}
-  .sidebar-top{margin:0 0 22px;padding:0}
-  .headroom-logo{width:176px}
-  .headroom-product{display:flex}
-  .nav{height:auto;flex-direction:column;align-items:stretch}
-  .nav-item{
-    height:46px;
-    margin:0;
-    border-bottom:1px solid rgba(255,255,255,.1);
-  }
-  .nav-item.active{
-    border-bottom-color:rgba(255,255,255,.1);
-    border-left:3px solid var(--headroom-gold);
-  }
-  .profile-mini{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.16)}
-  .profile-mini>div:not(.avatar){display:block}
-  .main-shell{padding-top:0}
-  .menu-button{display:grid}
+  .headroom-logo{width:112px}
 }
 @media(max-width:650px){
-  .topbar{height:60px}
-  .page{padding:25px 14px 84px}
-  .page-heading h1{font-size:29px}
-  .mobile-nav{
-    background:var(--headroom-navy);
-    border-radius:3px;
-    border-color:var(--headroom-navy);
-  }
-  .mobile-nav button{color:#9eabba}
-  .mobile-nav button.active{
-    background:var(--headroom-gold);
-    color:var(--headroom-navy);
-  }
+  .mobile-nav{background:var(--deep);border-color:var(--deep)}
+  .mobile-nav button.active{background:var(--lime);color:var(--deep)}
 }
