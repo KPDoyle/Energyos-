@@ -454,3 +454,202 @@ button:disabled{opacity:.6;cursor:wait}
   .diagnostic-grid>div{border-right:0;border-bottom:1px solid var(--line)}
   .diagnostic-grid>div:last-child{border-bottom:0}
 }
+
+
+/* =========================================================
+   Cross-device responsive hardening
+   Phone 320+, tablet portrait/landscape, laptop, desktop.
+   ========================================================= */
+html,body,#root,.app-shell{min-width:0;max-width:100%}
+html{overflow-x:hidden}
+body{overflow-x:hidden}
+img,svg{max-width:100%}
+button,input{min-width:0}
+.main-shell,.page,.topbar,.hero-grid,.pillar-grid,.recommendation-layout,
+.optimise-grid,.asset-layout,.installer-layout,.insight-grid{min-width:0}
+.card,.action-main,.asset-name,.fleet-row>span,.tariff-row>span{min-width:0}
+.action-main h3,.action-main p,.asset-name strong,.asset-name span,
+.fleet-row strong,.fleet-row small,.tariff-row strong,.tariff-row small{
+  overflow-wrap:anywhere;
+}
+
+/* Large desktop */
+@media(min-width:1500px){
+  .page{padding-left:46px;padding-right:46px}
+  .hero-grid{grid-template-columns:1.05fr .8fr 1.15fr}
+}
+
+/* Compact desktop / iPad landscape */
+@media(min-width:901px) and (max-width:1180px){
+  .sidebar{width:220px;padding-left:13px;padding-right:13px}
+  .main-shell{margin-left:220px}
+  .headroom-logo{width:104px}
+  .headroom-product{padding-left:7px}
+  .headroom-product strong{font-size:10px}
+  .nav-item{padding-left:10px;padding-right:10px}
+  .page{padding-left:24px;padding-right:24px}
+  .topbar{padding-left:24px;padding-right:24px}
+  .recommendation-layout{grid-template-columns:minmax(0,1fr) 270px}
+}
+
+/* Tablet: sidebar becomes drawer, retain desktop information density */
+@media(max-width:900px){
+  .sidebar{
+    width:min(290px,86vw);
+    overscroll-behavior:contain;
+  }
+  .sidebar.open{overflow-y:auto}
+  .main-shell{width:100%;margin-left:0}
+  .topbar{padding-left:16px;padding-right:16px}
+  .page{width:100%;padding-left:18px;padding-right:18px}
+  .property-select-wrap{min-width:0}
+  .property-select>div:nth-child(2){min-width:0}
+  .property-select strong,.property-select span{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .property-select strong{max-width:220px}
+  .search-button{flex:none}
+  .asset-layout,.installer-layout,.optimise-grid{width:100%}
+  .app-modal{width:min(620px,calc(100vw - 32px))}
+}
+
+/* Phones */
+@media(max-width:650px){
+  body{padding-bottom:calc(69px + env(safe-area-inset-bottom,0px))}
+  .topbar{
+    padding-left:max(12px,env(safe-area-inset-left,0px));
+    padding-right:max(12px,env(safe-area-inset-right,0px));
+  }
+  .topbar-actions{gap:6px}
+  .property-select{max-width:calc(100vw - 110px)}
+  .property-select strong{max-width:calc(100vw - 170px)}
+  .page{
+    padding-left:max(12px,env(safe-area-inset-left,0px));
+    padding-right:max(12px,env(safe-area-inset-right,0px));
+    padding-bottom:24px;
+  }
+  .page-heading{gap:12px}
+  .page-heading>div{min-width:0}
+  .page-heading h1{font-size:24px;line-height:1.12;letter-spacing:-1px}
+  .page-heading p{font-size:10.5px;line-height:1.5}
+
+  .hero-grid,.pillar-grid{width:100%}
+  .score-row{align-items:flex-start}
+  .score-ring{width:92px;height:92px}
+  .score-copy{min-width:0}
+
+  .energy-flow{
+    width:100%;
+    grid-template-columns:52px minmax(8px,1fr) 66px minmax(8px,1fr) 68px;
+    gap:0;
+  }
+  .flow-center{width:64px;height:64px}
+  .flow-node{width:100%;min-width:0}
+  .flow-stack{min-width:0}
+  .flow-node.compact{grid-template-columns:18px minmax(0,1fr)}
+  .flow-node.compact strong,.flow-node.compact span{white-space:nowrap;font-size:7.5px}
+
+  .action-card{padding:12px}
+  .action-main h3{font-size:11.5px}
+  .action-main p{font-size:9px}
+  .action-side{width:100%}
+
+  .optimise-table,.tariff-table,.fleet-table{max-width:100%;overflow:hidden}
+  .table-row,.tariff-row,.fleet-row{min-width:0}
+  .table-row>*,.tariff-row>*,.fleet-row>*{min-width:0}
+
+  .asset-detail{padding:16px}
+  .asset-row{padding-left:10px;padding-right:10px}
+  .asset-name strong{font-size:10px}
+
+  .forecast-card{padding:15px}
+  .weather-big{padding-top:18px}
+
+  .mobile-nav{
+    left:max(6px,env(safe-area-inset-left,0px));
+    right:max(6px,env(safe-area-inset-right,0px));
+    bottom:max(6px,env(safe-area-inset-bottom,0px));
+    height:60px;
+  }
+  .mobile-nav button{
+    min-width:0;
+    min-height:48px;
+    padding:3px 1px;
+  }
+  .mobile-nav button span{
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .modal-backdrop{
+    padding-left:max(8px,env(safe-area-inset-left,0px));
+    padding-right:max(8px,env(safe-area-inset-right,0px));
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .app-modal{
+    width:100%;
+    max-height:calc(90dvh - env(safe-area-inset-bottom,0px));
+  }
+  .modal-actions{flex-wrap:wrap}
+  .modal-actions>.primary-button,.modal-actions>.secondary-button{min-width:110px}
+}
+
+/* Small iPhone / 320–390 px */
+@media(max-width:390px){
+  .topbar{padding-left:9px;padding-right:9px}
+  .menu-button,.notification{width:32px;height:32px}
+  .property-select{max-width:calc(100vw - 91px)}
+  .property-select strong{max-width:calc(100vw - 130px);font-size:10px}
+  .page{padding-left:10px;padding-right:10px}
+  .page-heading h1{font-size:22px}
+  .eyebrow{font-size:8px}
+
+  .score-row{gap:11px}
+  .score-ring{width:80px;height:80px}
+  .score-ring strong{font-size:21px}
+
+  .energy-flow{
+    grid-template-columns:47px minmax(5px,1fr) 58px minmax(5px,1fr) 61px;
+  }
+  .flow-center{width:56px;height:56px}
+  .flow-center strong{font-size:14px}
+  .flow-node{height:56px}
+  .flow-node.compact{height:42px;padding:4px}
+
+  .action-card{grid-template-columns:31px minmax(0,1fr)}
+  .action-icon{width:31px;height:31px}
+  .action-meta{flex-wrap:wrap;gap:5px}
+
+  .asset-row{grid-template-columns:32px minmax(0,1fr) 52px}
+  .asset-icon{width:32px;height:32px}
+  .asset-name span{font-size:7.8px}
+
+  .fleet-row{grid-template-columns:minmax(0,1.25fr) 42px 64px}
+  .fleet-row>span:nth-child(3){font-size:8px}
+
+  .mobile-nav{left:4px;right:4px}
+  .mobile-nav button{font-size:6.8px}
+}
+
+/* Landscape phones: maximise usable vertical space */
+@media(max-height:520px) and (max-width:900px) and (orientation:landscape){
+  .topbar{height:52px}
+  .page{padding-top:18px}
+  .sidebar{padding-top:12px;padding-bottom:12px}
+  .sidebar-top{margin-bottom:12px}
+  .nav-item{height:38px}
+  .app-modal{max-height:94dvh}
+  .modal-head{padding-top:12px;padding-bottom:10px}
+  .modal-body{padding-top:12px}
+}
+
+/* Touch devices: comfortable hit targets without changing desktop density */
+@media(hover:none) and (pointer:coarse){
+  .nav-item{min-height:44px}
+  .icon-button{min-width:36px;min-height:36px}
+  .ghost-button,.text-link,.inline-action{min-height:32px}
+  .property-menu button{min-height:48px}
+  .search-results button,.notification-list button{min-height:58px}
+}
