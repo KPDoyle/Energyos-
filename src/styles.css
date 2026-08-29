@@ -256,3 +256,10 @@ body{color:var(--ink);background:var(--paper)}
   .mobile-nav{background:var(--deep);border-color:var(--deep)}
   .mobile-nav button.active{background:var(--lime);color:var(--deep)}
 }
+
+
+/* Fix: mobile close control must never appear in desktop sidebar */
+.sidebar-close{display:none !important;}
+@media(max-width:900px){
+  .sidebar.open .sidebar-close{display:grid !important;}
+}
