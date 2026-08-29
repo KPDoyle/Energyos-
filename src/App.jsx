@@ -91,14 +91,16 @@ const chart = {
 
 function Logo() {
   return (
-    <div className="brand">
-      <div className="logo-mark">
-        <svg viewBox="0 0 36 36" aria-hidden="true">
-          <path d="M6 19.2C6 11.9 11.5 6 18.5 6c4.4 0 8.4 2.4 10.7 6.1-3.4-1.1-7.1-.6-10.1 1.4-3 2-5 5.1-5.5 8.6-2.2-.3-4.2-1.3-5.7-2.9H6Z" />
-          <path d="M29.7 16.1c.2 1 .3 2 .3 3 0 6.1-4.9 11-11 11-4.9 0-9.1-3.2-10.5-7.6 3.1 2 7 2.6 10.6 1.4 4-1.4 7.1-4.2 8.7-7.8h1.9Z" />
-        </svg>
+    <div className="brand headroom-brand">
+      <img
+        className="headroom-logo"
+        src="https://headroom.technology/headroom-logo.png"
+        alt="Headroom"
+      />
+      <div className="headroom-product">
+        <span>Platform</span>
+        <strong>EnergyOS</strong>
       </div>
-      <span>Energy<span>OS</span></span>
     </div>
   );
 }
@@ -132,8 +134,8 @@ function Sidebar({ active, setActive, open, setOpen }) {
         <div className="assurance-card">
           <div className="assurance-icon"><ShieldCheck size={18} /></div>
           <div>
-            <strong>Independent by design</strong>
-            <p>No supplier commissions influence recommendations.</p>
+            <strong>Headroom software platform</strong>
+            <p>Independent energy intelligence across the asset lifecycle.</p>
           </div>
         </div>
         <div className="profile-mini">
@@ -224,7 +226,7 @@ function Overview({ profile, setActive }) {
     <div className="page">
       <section className="page-heading">
         <div>
-          <span className="eyebrow green">Saturday, 29 August</span>
+          <span className="eyebrow green">Headroom · EnergyOS</span>
           <h1>Your energy, optimised.</h1>
           <p>EnergyOS watches the whole system and turns complexity into clear financial decisions.</p>
         </div>
