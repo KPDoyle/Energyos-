@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   ArrowDownRight,
@@ -89,6 +89,73 @@ const chart = {
   generation: [0, 0, 0, 0, 2, 8, 22, 41, 58, 73, 84, 91, 96, 92, 80, 63, 41, 20, 7, 1, 0, 0, 0, 0],
 };
 
+const tariffOptions = [
+  {name:'Current Flex 24', supplier:'Current supplier', import:'26.8p', export:'8.0p', cost:'£1,612', net:'£1,296', current:true},
+  {name:'Smart Day/Night', supplier:'Provider A', import:'8.5–31.2p', export:'15.0p', cost:'£1,374', net:'£962', best:true},
+  {name:'Dynamic Saver', supplier:'Provider B', import:'5.4–37.1p', export:'12.0p', cost:'£1,421', net:'£1,078'},
+  {name:'Fixed Solar Plus', supplier:'Provider C', import:'24.4p', export:'16.5p', cost:'£1,544', net:'£1,104'},
+];
+
+const defaultCustomers = [
+  {name:'Willow House', system:'8.4 kWp + 10.4 kWh', score:88, issue:'Optimised', value:'£684'},
+  {name:'The Old Mill', system:'12.2 kWp + 13.5 kWh', score:72, issue:'2 actions', value:'£1,142'},
+  {name:'Arden Dental', system:'34 kWp + 26 kWh', score:81, issue:'Tariff review', value:'£2,840'},
+  {name:'Moorland Farm', system:'24 kWp solar', score:64, issue:'Service due', value:'£1,390'},
+  {name:'Parkview House', system:'6.8 kWp + EV', score:91, issue:'Optimised', value:'£412'},
+  {name:'Kingsway Offices', system:'48 kWp + 40 kWh', score:76, issue:'1 action', value:'£3,210'},
+  {name:'Rosebank Farm', system:'18 kWp + 13.5 kWh', score:83, issue:'Optimised', value:'£1,020'},
+  {name:'Wren Court', system:'10.2 kWp + EV', score:69, issue:'Service due', value:'£890'},
+];
+
+function usePersistentState(key, initialValue) {
+  const [value, setValueState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved !== null ? JSON.parse(saved) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+  const setValue = (next) => {
+    setValueState((current) => {
+      const resolved = typeof next === 'function' ? next(current) : next;
+      try { localStorage.setItem(key, JSON.stringify(resolved)); } catch {}
+      return resolved;
+    });
+  };
+  return [value, setValue];
+}
+
+function downloadFile(filename, content, type='text/plain;charset=utf-8') {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function Modal({ title, subtitle, onClose, children }) {
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <div className="app-modal" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(e)=>e.stopPropagation()}>
+        <div className="modal-head">
+          <div><span className="eyebrow green">Headroom · EnergyOS</span><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
+          <button className="icon-button" onClick={onClose} aria-label="Close"><X size={18}/></button>
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function FormField({ label, children }) {
+  return <label className="form-field"><span>{label}</span>{children}</label>;
+}
+
 function Logo() {
   return (
     <div className="brand headroom-brand">
@@ -152,7 +219,7 @@ function Sidebar({ active, setActive, open, setOpen }) {
   );
 }
 
-function Header({ profileKey, setProfileKey, onMenu }) {
+function Header({ profileKey, setProfileKey, onMenu, onSearch, onNotifications, unread }) {
   const [open, setOpen] = useState(false);
   const p = profiles[profileKey];
   return (
@@ -162,10 +229,7 @@ function Header({ profileKey, setProfileKey, onMenu }) {
         <span className="eyebrow">Energy estate</span>
         <button className="property-select" onClick={() => setOpen(!open)}>
           <div className="property-dot"><Home size={15} /></div>
-          <div>
-            <strong>{p.name}</strong>
-            <span>{p.subtitle}</span>
-          </div>
+          <div><strong>{p.name}</strong><span>{p.subtitle}</span></div>
           <ChevronDown size={17} />
         </button>
         {open && (
@@ -181,8 +245,8 @@ function Header({ profileKey, setProfileKey, onMenu }) {
         )}
       </div>
       <div className="topbar-actions">
-        <button className="search-button"><Search size={17}/><span>Search</span><kbd>⌘K</kbd></button>
-        <button className="icon-button notification"><Bell size={19}/><span /></button>
+        <button className="search-button" onClick={onSearch}><Search size={17}/><span>Search</span><kbd>⌘K</kbd></button>
+        <button className="icon-button notification" onClick={onNotifications} aria-label="Notifications"><Bell size={19}/>{unread > 0 && <span />}</button>
       </div>
     </header>
   );
@@ -361,7 +425,7 @@ function Overview({ profile, setActive }) {
 }
 
 function ActionCard({ priority, title, copy, saving, effort, icon }) {
-  const [done, setDone] = useState(false);
+  const [done, setDone] = usePersistentState('energyos-action-' + title, false);
   return (
     <div className={"card action-card " + (done ? 'completed' : '')}>
       <div className="action-icon">{done ? <Check size={19}/> : icon}</div>
@@ -376,14 +440,19 @@ function ActionCard({ priority, title, copy, saving, effort, icon }) {
 }
 
 function Optimise() {
-  const [mode, setMode] = useState('value');
-  const [applied, setApplied] = useState([]);
+  const [mode, setMode] = usePersistentState('energyos-optimise-mode', 'value');
+  const [applied, setApplied] = usePersistentState('energyos-queue', []);
+  const [minSaving, setMinSaving] = usePersistentState('energyos-min-saving', 75);
+  const [maxPayback, setMaxPayback] = usePersistentState('energyos-max-payback', 6);
+  const [protectWarranty, setProtectWarranty] = usePersistentState('energyos-protect-warranty', true);
+  const [autoSchedule, setAutoSchedule] = usePersistentState('energyos-auto-schedule', true);
   const actions = [
     { id:1, title:'Move battery top-up to 00:30', value:'£286', payback:'Immediate', confidence:96, tag:'Battery strategy' },
     { id:2, title:'Switch export tariff at next renewal', value:'£238', payback:'Immediate', confidence:92, tag:'Tariff' },
     { id:3, title:'Schedule array clean in October', value:'£160', payback:'7 months', confidence:84, tag:'Maintenance' },
     { id:4, title:'Add 5.2 kWh battery capacity', value:'£312', payback:'5.8 years', confidence:78, tag:'Upgrade' },
   ];
+  const queuedValue = actions.filter(a=>applied.includes(a.id)).reduce((sum,a)=>sum+Number(a.value.replace(/[^0-9]/g,'')),0);
   return (
     <div className="page">
       <section className="page-heading">
@@ -392,21 +461,21 @@ function Optimise() {
       </section>
       <div className="optimise-summary">
         <div><span>Identified annual upside</span><strong>£996</strong><small>across 4 actions</small></div>
-        <div><span>Immediate savings</span><strong>£524</strong><small>no capital required</small></div>
+        <div><span>Queued annual value</span><strong>£{queuedValue}</strong><small>{applied.length} action{applied.length===1?'':'s'} selected</small></div>
         <div><span>Forecast confidence</span><strong>91%</strong><small>12 months of data</small></div>
       </div>
       <div className="optimise-grid">
         <div className="card decision-card">
-          <div className="decision-head"><Sparkles size={20}/><div><span>EnergyOS recommendation</span><h2>Make two changes now. Defer two.</h2></div></div>
-          <p>Your tariff and battery settings are the highest-confidence opportunities. Panel cleaning does not yet clear your minimum payback threshold, while extra battery capacity is useful but not urgent.</p>
+          <div className="decision-head"><Sparkles size={20}/><div><span>EnergyOS recommendation</span><h2>{mode==='carbon'?'Prioritise self-consumption and low-carbon windows.':'Make two changes now. Defer two.'}</h2></div></div>
+          <p>{mode==='carbon'?'EnergyOS will favour solar self-use, avoid peak-grid periods and preserve battery health while keeping your financial thresholds in view.':'Your tariff and battery settings are the highest-confidence opportunities. Panel cleaning does not yet clear your minimum payback threshold, while extra battery capacity is useful but not urgent.'}</p>
           <div className="decision-answer"><span>Best next action</span><strong>Shift battery charging window tonight</strong><b>+£286/year</b></div>
         </div>
         <div className="card threshold-card">
           <div className="card-header"><div>Your decision rules</div><Settings size={17}/></div>
-          <label><span>Minimum annual saving</span><strong>£75</strong></label><input type="range" min="0" max="300" defaultValue="75"/>
-          <label><span>Maximum upgrade payback</span><strong>6 years</strong></label><input type="range" min="1" max="12" defaultValue="6"/>
-          <label className="toggle-row"><span>Protect equipment warranty</span><i className="toggle on"><b/></i></label>
-          <label className="toggle-row"><span>Allow automatic schedule changes</span><i className="toggle on"><b/></i></label>
+          <label><span>Minimum annual saving</span><strong>£{minSaving}</strong></label><input type="range" min="0" max="300" value={minSaving} onChange={e=>setMinSaving(Number(e.target.value))}/>
+          <label><span>Maximum upgrade payback</span><strong>{maxPayback} years</strong></label><input type="range" min="1" max="12" value={maxPayback} onChange={e=>setMaxPayback(Number(e.target.value))}/>
+          <button className="toggle-row toggle-button" onClick={()=>setProtectWarranty(!protectWarranty)}><span>Protect equipment warranty</span><i className={'toggle '+(protectWarranty?'on':'')}><b/></i></button>
+          <button className="toggle-row toggle-button" onClick={()=>setAutoSchedule(!autoSchedule)}><span>Allow automatic schedule changes</span><i className={'toggle '+(autoSchedule?'on':'')}><b/></i></button>
         </div>
       </div>
       <div className="section-heading"><div><span className="eyebrow">Prioritised plan</span><h2>Optimisation queue</h2></div></div>
@@ -417,7 +486,7 @@ function Optimise() {
             <span><i className="small-icon"><Zap size={15}/></i><div><strong>{a.title}</strong><small>{a.tag}</small></div></span>
             <strong>{a.value}</strong><span>{a.payback}</span>
             <span><i className="confidence"><b style={{width:a.confidence+'%'}}/></i>{a.confidence}%</span>
-            <button onClick={()=>setApplied(applied.includes(a.id)?applied.filter(x=>x!==a.id):[...applied,a.id])}>{applied.includes(a.id)?'Queued':'Review'}</button>
+            <button onClick={()=>setApplied(current=>current.includes(a.id)?current.filter(x=>x!==a.id):[...current,a.id])}>{applied.includes(a.id)?'Queued':'Queue'}</button>
           </div>
         ))}
       </div>
@@ -435,64 +504,94 @@ const assets = [
 
 function Assets() {
   const [selected, setSelected] = useState(assets[1]);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [lastRefresh, setLastRefresh] = usePersistentState('energyos-last-refresh', '34 sec ago');
+  const [syncing, setSyncing] = useState(false);
+  const refresh = () => {
+    setSyncing(true);
+    setTimeout(()=>{ setLastRefresh(new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})); setSyncing(false); }, 650);
+  };
   return (
     <div className="page">
-      <section className="page-heading"><div><span className="eyebrow green">Equipment health</span><h1>Your energy assets</h1><p>One health view across manufacturers, warranties and operating data.</p></div><button className="primary-button"><RefreshCw size={16}/> Refresh data</button></section>
+      <section className="page-heading"><div><span className="eyebrow green">Equipment health</span><h1>Your energy assets</h1><p>One health view across manufacturers, warranties and operating data.</p></div><button className="primary-button" onClick={refresh} disabled={syncing}><RefreshCw size={16} className={syncing?'spin':''}/> {syncing?'Syncing…':'Refresh data'}</button></section>
       <div className="asset-layout">
         <div className="asset-list">
-          {assets.map((a)=>{
-            const Icon=a.icon;
-            return <button key={a.name} className={"card asset-row "+(selected.name===a.name?'selected':'')} onClick={()=>setSelected(a)}>
-              <div className="asset-icon"><Icon size={20}/></div><div className="asset-name"><strong>{a.name}</strong><span>{a.model}</span></div>
-              <div className="asset-health"><i><b style={{width:a.health+'%'}}/></i><strong>{a.health}%</strong></div>
-              <span className={"asset-status "+(a.status==='Watch'?'watch':'')}>{a.status}</span><ArrowRight size={16}/>
-            </button>
-          })}
+          {assets.map((a)=>{ const Icon=a.icon; return <button key={a.name} className={"card asset-row "+(selected.name===a.name?'selected':'')} onClick={()=>setSelected(a)}>
+            <div className="asset-icon"><Icon size={20}/></div><div className="asset-name"><strong>{a.name}</strong><span>{a.model}</span></div>
+            <div className="asset-health"><i><b style={{width:a.health+'%'}}/></i><strong>{a.health}%</strong></div>
+            <span className={"asset-status "+(a.status==='Watch'?'watch':'')}>{a.status}</span><ArrowRight size={16}/>
+          </button>})}
         </div>
         <aside className="card asset-detail">
           <div className="asset-detail-top"><div className="asset-icon large"><selected.icon size={24}/></div><div><span>Selected asset</span><h2>{selected.name}</h2><p>{selected.model}</p></div></div>
           <div className="health-score"><span>Health score</span><strong>{selected.health}<small>/100</small></strong><i><b style={{width:selected.health+'%'}}/></i></div>
-          <div className="detail-stats"><div><span>Performance</span><strong>{selected.meta}</strong></div><div><span>Warranty remaining</span><strong>{selected.warranty}</strong></div><div><span>Last telemetry</span><strong>34 sec ago</strong></div><div><span>Fault codes</span><strong>None</strong></div></div>
+          <div className="detail-stats"><div><span>Performance</span><strong>{selected.meta}</strong></div><div><span>Warranty remaining</span><strong>{selected.warranty}</strong></div><div><span>Last telemetry</span><strong>{lastRefresh}</strong></div><div><span>Fault codes</span><strong>{selected.status==='Watch'?'1 advisory':'None'}</strong></div></div>
           <div className="warranty-card"><ShieldCheck size={18}/><div><strong>Warranty conditions protected</strong><p>Current operating strategy stays within recorded manufacturer thresholds.</p></div></div>
-          <button className="secondary-button full">View diagnostics <ArrowRight size={15}/></button>
+          <button className="secondary-button full" onClick={()=>setDiagnosticsOpen(true)}>View diagnostics <ArrowRight size={15}/></button>
         </aside>
       </div>
+      {diagnosticsOpen && <Modal title={selected.name+' diagnostics'} subtitle="Read-only diagnostic summary from the EnergyOS asset model." onClose={()=>setDiagnosticsOpen(false)}>
+        <div className="diagnostic-grid">
+          <div><span>Health</span><strong>{selected.health}/100</strong></div><div><span>Status</span><strong>{selected.status}</strong></div>
+          <div><span>Performance</span><strong>{selected.meta}</strong></div><div><span>Warranty</span><strong>{selected.warranty}</strong></div>
+        </div>
+        <div className="diagnostic-note"><ShieldCheck size={18}/><div><strong>No critical intervention required.</strong><p>{selected.status==='Watch'?'EnergyOS has detected a small performance drift. Continue monitoring and schedule service only if the economic threshold is reached.':'Telemetry is within expected operating limits and warranty-safe thresholds.'}</p></div></div>
+        <button className="primary-button" onClick={()=>setDiagnosticsOpen(false)}>Close diagnostics</button>
+      </Modal>}
     </div>
   );
 }
 
 function Tariffs() {
-  const tariffs = [
-    {name:'Current Flex 24', supplier:'Current supplier', import:'26.8p', export:'8.0p', cost:'£1,612', net:'£1,296', current:true},
-    {name:'Smart Day/Night', supplier:'Provider A', import:'8.5–31.2p', export:'15.0p', cost:'£1,374', net:'£962', best:true},
-    {name:'Dynamic Saver', supplier:'Provider B', import:'5.4–37.1p', export:'12.0p', cost:'£1,421', net:'£1,078'},
-    {name:'Fixed Solar Plus', supplier:'Provider C', import:'24.4p', export:'16.5p', cost:'£1,544', net:'£1,104'},
-  ];
+  const [review, setReview] = useState(null);
+  const [plannedTariff, setPlannedTariff] = usePersistentState('energyos-planned-tariff', null);
   return (
     <div className="page">
       <section className="page-heading"><div><span className="eyebrow green">Independent tariff modelling</span><h1>Tariffs, based on your actual life.</h1><p>Not a headline rate comparison. EnergyOS models your usage, generation, battery, export and exit costs together.</p></div><span className="independent-chip"><ShieldCheck size={16}/> No supplier commission</span></section>
       <div className="card tariff-answer">
-        <div className="answer-icon"><Sparkles size={22}/></div><div><span>EnergyOS answer</span><h2>Do not switch today.</h2><p>Your current fixed import deal remains valuable. Review on 18 January, when the exit cost falls below the projected saving from Smart Day/Night.</p></div><div className="answer-value"><span>Projected upside</span><strong>£334/yr</strong><small>after exit costs</small></div>
+        <div className="answer-icon"><Sparkles size={22}/></div><div><span>EnergyOS answer</span><h2>{plannedTariff?'Tariff review scheduled.':'Do not switch today.'}</h2><p>{plannedTariff?plannedTariff+' is saved as your next tariff review candidate. EnergyOS will keep comparing it against your current whole-system cost.':'Your current fixed import deal remains valuable. Review on 18 January, when the exit cost falls below the projected saving from Smart Day/Night.'}</p></div><div className="answer-value"><span>Projected upside</span><strong>£334/yr</strong><small>after exit costs</small></div>
       </div>
       <div className="tariff-table">
         <div className="tariff-head"><span>Tariff</span><span>Import</span><span>Export</span><span>Annual import</span><span>Net energy cost</span></div>
-        {tariffs.map(t => <div key={t.name} className={"card tariff-row "+(t.best?'best':'')}>
+        {tariffOptions.map(t => <div key={t.name} className={"card tariff-row "+(t.best?'best':'')}>
           <span><div><strong>{t.name}</strong><small>{t.supplier}</small></div>{t.current&&<b className="current-pill">Current</b>}{t.best&&<b className="best-pill">Best modelled</b>}</span>
-          <strong>{t.import}</strong><strong>{t.export}</strong><span>{t.cost}</span><span><strong>{t.net}</strong>{t.best&&<small className="save-text">Save £334</small>}</span>
+          <strong>{t.import}</strong><strong>{t.export}</strong><span>{t.cost}</span>
+          <span className="tariff-cost"><strong>{t.net}</strong>{t.best&&<small className="save-text">Save £334</small>}{!t.current&&<button className="inline-action" onClick={()=>setReview(t)}>Review</button>}</span>
         </div>)}
       </div>
       <div className="card assumptions">
         <div><span className="eyebrow">What EnergyOS included</span><h3>A whole-system comparison</h3></div>
         <div className="assumption-grid"><span><Check/>12 months consumption</span><span><Check/>Solar generation curve</span><span><Check/>Battery charge limits</span><span><Check/>Actual export profile</span><span><Check/>EV charging demand</span><span><Check/>Exit / standing charges</span></div>
       </div>
+      {review && <Modal title={'Review '+review.name} subtitle="EnergyOS remains advisory only and will not switch your supplier automatically." onClose={()=>setReview(null)}>
+        <div className="review-summary"><div><span>Import</span><strong>{review.import}</strong></div><div><span>Export</span><strong>{review.export}</strong></div><div><span>Modelled net cost</span><strong>{review.net}</strong></div></div>
+        <p className="modal-copy">Based on the current estate model, this tariff is worth keeping under review. Saving it does not instruct a supplier or create an energy contract.</p>
+        <div className="modal-actions"><button className="secondary-button" onClick={()=>setReview(null)}>Cancel</button><button className="primary-button" onClick={()=>{setPlannedTariff(review.name);setReview(null)}}>Save for review</button></div>
+      </Modal>}
     </div>
   );
 }
 
 function Insights() {
+  const [lastReport, setLastReport] = usePersistentState('energyos-last-report', null);
+  const generateReport = () => {
+    const rows = [
+      ['Metric','Value','Comment'],
+      ['Estimated value protected','£812','12-month EnergyOS estimate'],
+      ['Energy independence','68%','Up 9 percentage points'],
+      ['Carbon avoided','2.2 t','Estimated this year'],
+      ['Battery scheduling value','£386','Largest optimisation contribution'],
+      ['Tariff decisions value','£284','Independent tariff modelling'],
+      ['Self-consumption value','£142','Solar self-use improvement'],
+    ];
+    const csv = rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\n');
+    downloadFile('Headroom-EnergyOS-quarterly-report.csv', csv, 'text/csv;charset=utf-8');
+    setLastReport(new Date().toISOString());
+  };
   return (
     <div className="page">
-      <section className="page-heading"><div><span className="eyebrow green">Energy intelligence</span><h1>Understand the why.</h1><p>Quarterly reporting without the consultant's spreadsheet. Clear evidence, assumptions and actions.</p></div><button className="primary-button">Generate quarterly report</button></section>
+      <section className="page-heading"><div><span className="eyebrow green">Energy intelligence</span><h1>Understand the why.</h1><p>Quarterly reporting without the consultant's spreadsheet. Clear evidence, assumptions and actions.</p></div><button className="primary-button" onClick={generateReport}>Generate quarterly report</button></section>
+      {lastReport && <div className="report-status"><Check size={14}/> Latest report generated {new Date(lastReport).toLocaleString()}</div>}
       <div className="insight-grid">
         <div className="card insight-hero">
           <span className="eyebrow">12-month performance</span><h2>EnergyOS has improved estimated asset value by <em>£812</em></h2><p>Most of the gain came from battery scheduling, followed by export tariff improvements and higher solar self-consumption.</p>
@@ -512,33 +611,57 @@ function Insights() {
 }
 
 function Installer() {
-  const customers = [
-    {name:'Willow House', system:'8.4 kWp + 10.4 kWh', score:88, issue:'Optimised', value:'£684'},
-    {name:'The Old Mill', system:'12.2 kWp + 13.5 kWh', score:72, issue:'2 actions', value:'£1,142'},
-    {name:'Arden Dental', system:'34 kWp + 26 kWh', score:81, issue:'Tariff review', value:'£2,840'},
-    {name:'Moorland Farm', system:'24 kWp solar', score:64, issue:'Service due', value:'£1,390'},
-    {name:'Parkview House', system:'6.8 kWp + EV', score:91, issue:'Optimised', value:'£412'},
-  ];
+  const [customers, setCustomers] = usePersistentState('energyos-customers', defaultCustomers);
+  const [showAll, setShowAll] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [campaignOpen, setCampaignOpen] = useState(false);
+  const [campaigns, setCampaigns] = usePersistentState('energyos-campaigns', []);
+  const [form, setForm] = useState({name:'',system:'',value:'£0'});
+  const addCustomer = (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.system.trim()) return;
+    setCustomers(current=>[{name:form.name.trim(),system:form.system.trim(),score:75,issue:'New',value:form.value||'£0'},...current]);
+    setForm({name:'',system:'',value:'£0'});
+    setAdding(false);
+  };
+  const createCampaign = () => {
+    setCampaigns(current=>[{name:'Battery-ready customer campaign',created:new Date().toISOString(),audience:412},...current]);
+    setCampaignOpen(false);
+  };
+  const visible = showAll ? customers : customers.slice(0,5);
   return (
     <div className="page">
-      <section className="page-heading"><div><span className="eyebrow green">Installer workspace</span><h1>Turn installed customers into lifetime customers.</h1><p>Monitor the fleet, triage service, protect warranties and surface qualified upgrade opportunities.</p></div><button className="primary-button"><Users size={16}/> Add customer</button></section>
+      <section className="page-heading"><div><span className="eyebrow green">Installer workspace</span><h1>Turn installed customers into lifetime customers.</h1><p>Monitor the fleet, triage service, protect warranties and surface qualified upgrade opportunities.</p></div><button className="primary-button" onClick={()=>setAdding(true)}><Users size={16}/> Add customer</button></section>
       <div className="fleet-kpis">
-        <div className="card"><span>Customers monitored</span><strong>3,284</strong><small><ArrowUpRight/> 184 this quarter</small></div>
+        <div className="card"><span>Customers monitored</span><strong>{(3276+customers.length).toLocaleString()}</strong><small><ArrowUpRight/> live portfolio</small></div>
         <div className="card"><span>Recurring service value</span><strong>£68.4k</strong><small>annualised</small></div>
         <div className="card"><span>Qualified opportunities</span><strong>£412k</strong><small>estimated 12-month pipeline</small></div>
         <div className="card"><span>Open service cases</span><strong>18</strong><small>7 remotely resolved</small></div>
       </div>
+      {campaigns.length>0 && <div className="report-status"><Check size={14}/> {campaigns.length} campaign{campaigns.length===1?'':'s'} created in this workspace</div>}
       <div className="installer-layout">
         <div className="card fleet-table">
-          <div className="card-header"><div><span className="eyebrow">Customer fleet</span><h3>Priority accounts</h3></div><button className="ghost-button">View all</button></div>
+          <div className="card-header"><div><span className="eyebrow">Customer fleet</span><h3>Priority accounts</h3></div><button className="ghost-button" onClick={()=>setShowAll(!showAll)}>{showAll?'Show priority':'View all'}</button></div>
           <div className="fleet-head"><span>Customer</span><span>EnergyOS</span><span>Status</span><span>Upside</span></div>
-          {customers.map(c=><div className="fleet-row" key={c.name}><span><strong>{c.name}</strong><small>{c.system}</small></span><span><b>{c.score}</b>/100</span><span className={c.issue==='Optimised'?'positive':''}>{c.issue}</span><strong>{c.value}</strong></div>)}
+          {visible.map((customer,index)=><div className="fleet-row" key={customer.name+'-'+index}><span><strong>{customer.name}</strong><small>{customer.system}</small></span><span><b>{customer.score}</b>/100</span><span className={customer.issue==='Optimised'?'positive':''}>{customer.issue}</span><strong>{customer.value}</strong></div>)}
         </div>
         <aside className="installer-side">
-          <div className="card opportunity-card"><div className="card-header"><div>Next best opportunity</div><Sparkles size={18}/></div><span className="eyebrow green">Upgrade trigger</span><h2>412 customers are battery-ready</h2><p>They have sufficient export, suitable inverter configurations and modelled payback below 7 years.</p><strong>£1.16m</strong><span>estimated install revenue</span><button className="secondary-button full">Create campaign <ArrowRight size={15}/></button></div>
+          <div className="card opportunity-card"><div className="card-header"><div>Next best opportunity</div><Sparkles size={18}/></div><span className="eyebrow green">Upgrade trigger</span><h2>412 customers are battery-ready</h2><p>They have sufficient export, suitable inverter configurations and modelled payback below 7 years.</p><strong>£1.16m</strong><span>estimated install revenue</span><button className="secondary-button full" onClick={()=>setCampaignOpen(true)}>Create campaign <ArrowRight size={15}/></button></div>
           <div className="card service-card"><div className="card-header"><div>Service triage</div><Activity size={18}/></div><div><span>Resolved remotely</span><strong>39%</strong></div><div><span>Engineer visits avoided</span><strong>14</strong></div><div><span>Avg. diagnostic time</span><strong>6m 18s</strong></div></div>
         </aside>
       </div>
+      {adding && <Modal title="Add customer" subtitle="Create a customer record in the local EnergyOS installer workspace." onClose={()=>setAdding(false)}>
+        <form className="app-form" onSubmit={addCustomer}>
+          <FormField label="Customer / site name"><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="e.g. Red Lion Farm" autoFocus/></FormField>
+          <FormField label="Installed system"><input value={form.system} onChange={e=>setForm({...form,system:e.target.value})} placeholder="e.g. 18 kWp + 13.5 kWh"/></FormField>
+          <FormField label="Estimated annual upside"><input value={form.value} onChange={e=>setForm({...form,value:e.target.value})} placeholder="£0"/></FormField>
+          <div className="modal-actions"><button type="button" className="secondary-button" onClick={()=>setAdding(false)}>Cancel</button><button className="primary-button" type="submit">Add customer</button></div>
+        </form>
+      </Modal>}
+      {campaignOpen && <Modal title="Create battery campaign" subtitle="Build a campaign from the 412 battery-ready customers identified by EnergyOS." onClose={()=>setCampaignOpen(false)}>
+        <div className="campaign-preview"><span>Audience</span><strong>412 customers</strong><p>Suitable export profile, compatible inverter configuration and modelled payback below seven years.</p></div>
+        <div className="modal-actions"><button className="secondary-button" onClick={()=>setCampaignOpen(false)}>Cancel</button><button className="primary-button" onClick={createCampaign}>Create campaign</button></div>
+      </Modal>}
     </div>
   );
 }
@@ -548,10 +671,30 @@ function EmptyPage({ title }) {
 }
 
 export default function App() {
-  const [active, setActive] = useState('overview');
-  const [profileKey, setProfileKey] = useState('home');
+  const [active, setActive] = usePersistentState('energyos-active-view', 'overview');
+  const [profileKey, setProfileKey] = usePersistentState('energyos-profile', 'home');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [notifications, setNotifications] = usePersistentState('energyos-notifications', [
+    {id:1,title:'Tariff review opportunity',detail:'Export pricing has improved for Willow House.',read:false,view:'tariffs'},
+    {id:2,title:'Battery strategy ready',detail:'A lower-cost overnight charging window is available.',read:false,view:'optimise'},
+    {id:3,title:'Asset health check complete',detail:'No critical faults detected across connected assets.',read:true,view:'assets'},
+  ]);
   const profile = profiles[profileKey];
+  const unread = notifications.filter(n=>!n.read).length;
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==='k') {
+        e.preventDefault(); setSearchOpen(true);
+      }
+      if (e.key==='Escape') { setSearchOpen(false); setNotificationsOpen(false); }
+    };
+    window.addEventListener('keydown', handler);
+    return ()=>window.removeEventListener('keydown', handler);
+  }, []);
 
   const content = useMemo(() => {
     if (active === 'overview') return <Overview profile={profile} setActive={setActive}/>;
@@ -563,19 +706,44 @@ export default function App() {
     return <EmptyPage title="EnergyOS" />;
   }, [active, profile]);
 
+  const searchItems = [
+    ...navItems.map(n=>({label:n.label,detail:'Open '+n.label,view:n.id})),
+    ...assets.map(a=>({label:a.name,detail:a.model,view:'assets'})),
+    ...tariffOptions.map(t=>({label:t.name,detail:t.supplier,view:'tariffs'})),
+    ...defaultCustomers.slice(0,5).map(x=>({label:x.name,detail:x.system,view:'installer'})),
+  ].filter(item => (item.label+' '+item.detail).toLowerCase().includes(query.toLowerCase()));
+
+  const openNotification = (n) => {
+    setNotifications(current=>current.map(x=>x.id===n.id?{...x,read:true}:x));
+    setNotificationsOpen(false);
+    setActive(n.view);
+  };
+
   return (
     <div className="app-shell">
       <Sidebar active={active} setActive={setActive} open={menuOpen} setOpen={setMenuOpen}/>
       <main className="main-shell">
-        <Header profileKey={profileKey} setProfileKey={setProfileKey} onMenu={()=>setMenuOpen(true)}/>
+        <Header profileKey={profileKey} setProfileKey={setProfileKey} onMenu={()=>setMenuOpen(true)} onSearch={()=>setSearchOpen(true)} onNotifications={()=>setNotificationsOpen(true)} unread={unread}/>
         {content}
       </main>
       <nav className="mobile-nav">
-        {navItems.slice(0,5).map(item => {
-          const Icon=item.icon;
-          return <button key={item.id} className={active===item.id?'active':''} onClick={()=>setActive(item.id)}><Icon size={18}/><span>{item.label}</span></button>
-        })}
+        {navItems.slice(0,5).map(item => { const Icon=item.icon; return <button key={item.id} className={active===item.id?'active':''} onClick={()=>setActive(item.id)}><Icon size={18}/><span>{item.label}</span></button> })}
       </nav>
+
+      {searchOpen && <Modal title="Search EnergyOS" subtitle="Jump to a workspace, asset, tariff or customer." onClose={()=>{setSearchOpen(false);setQuery('')}}>
+        <div className="modal-search"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search…" autoFocus/></div>
+        <div className="search-results">
+          {searchItems.slice(0,10).map((item,index)=><button key={item.label+'-'+index} onClick={()=>{setActive(item.view);setSearchOpen(false);setQuery('')}}><div><strong>{item.label}</strong><span>{item.detail}</span></div><ArrowRight size={15}/></button>)}
+          {searchItems.length===0 && <p className="empty-state">No matching EnergyOS records.</p>}
+        </div>
+      </Modal>}
+
+      {notificationsOpen && <Modal title="Notifications" subtitle={unread+' unread'} onClose={()=>setNotificationsOpen(false)}>
+        <div className="notification-list">
+          {notifications.map(n=><button key={n.id} className={n.read?'read':''} onClick={()=>openNotification(n)}><span className="notification-dot"/><div><strong>{n.title}</strong><p>{n.detail}</p></div><ArrowRight size={15}/></button>)}
+        </div>
+        <button className="secondary-button full" onClick={()=>setNotifications(current=>current.map(n=>({...n,read:true})))}>Mark all as read</button>
+      </Modal>}
     </div>
   );
 }
