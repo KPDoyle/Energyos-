@@ -82,6 +82,7 @@ const customerNavItems = [
   { id: 'assets', label: 'Assets', icon: BatteryCharging },
   { id: 'tariffs', label: 'Tariffs', icon: WalletCards },
   { id: 'engineer', label: 'Support', icon: Cpu },
+  { id: 'connections', label: 'Connections', icon: PlugZap },
 ];
 
 const installerNavItems = [
@@ -90,6 +91,7 @@ const installerNavItems = [
   { id: 'opportunities', label: 'Opportunities', icon: Sparkles },
   { id: 'engineer', label: 'Service', icon: Cpu },
   { id: 'insights', label: 'Analytics', icon: Activity },
+  { id: 'connections', label: 'Connections', icon: PlugZap },
 ];
 
 const chart = {
@@ -732,6 +734,144 @@ function Installer({ section='portfolio', onViewCustomer }) {
 }
 
 
+
+function Connections() {
+  const [status, setStatus] = useState(null);
+  const [octopus, setOctopus] = useState(null);
+  const [pvgis, setPvgis] = useState(null);
+  const [site, setSite] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [setup, setSetup] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [s,o,p,model] = await Promise.all([
+        fetch('/api/status').then(r=>r.json()),
+        fetch('/api/octopus').then(r=>r.json()),
+        fetch('/api/pvgis?lat=51.75&lon=-1.25&peakpower=8.4&loss=14&angle=32&aspect=45').then(r=>r.json()),
+        fetch('/api/site?id=willow-house').then(r=>r.json())
+      ]);
+      setStatus(s);
+      setOctopus(o);
+      setPvgis(p);
+      setSite(model);
+    } catch {
+      setStatus({ok:false});
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(()=>{ load(); },[]);
+
+  const providers = [
+    {
+      id:'givenergy',
+      name:'GivEnergy',
+      detail:'Solar, inverter and battery telemetry',
+      live:status?.providers?.givenergy?.configured,
+      note:status?.providers?.givenergy?.configured?'Server credentials configured':'Awaiting secure API token and inverter serial',
+      metric:status?.providers?.givenergy?.configured?'Ready for telemetry':'Credential required'
+    },
+    {
+      id:'n3rgy',
+      name:'Smart meter · n3rgy',
+      detail:'Independent UK consumption/import/export data',
+      live:status?.providers?.n3rgy?.configured,
+      note:status?.providers?.n3rgy?.configured?'Server credentials configured':'Awaiting commercial credentials and customer consent',
+      metric:status?.providers?.n3rgy?.configured?'Ready for meter data':'Credential required'
+    },
+    {
+      id:'octopus',
+      name:'Octopus tariff feed',
+      detail:'Live public product and tariff catalogue',
+      live:octopus?.ok,
+      note:octopus?.ok?'Live API responding':'Live feed unavailable',
+      metric:octopus?.ok?((octopus.count||0)+' products found'):'Check connection'
+    },
+    {
+      id:'pvgis',
+      name:'PVGIS solar baseline',
+      detail:'Weather-adjusted expected PV generation',
+      live:pvgis?.ok,
+      note:pvgis?.ok?'Live model responding':'Solar baseline unavailable',
+      metric:pvgis?.ok && pvgis.yearlyEnergyKwh?Math.round(pvgis.yearlyEnergyKwh).toLocaleString()+' kWh/yr':'Live model'
+    }
+  ];
+
+  return (
+    <div className="page">
+      <section className="page-heading">
+        <div>
+          <span className="eyebrow green">EnergyOS data layer</span>
+          <h1>Connections</h1>
+          <p>Connect the real systems beneath EnergyOS. Credentials stay on the server; the browser only receives normalised energy data.</p>
+        </div>
+        <button className="primary-button" onClick={load} disabled={loading}><RefreshCw size={16} className={loading?'spin':''}/>{loading?'Checking…':'Refresh connections'}</button>
+      </section>
+
+      <div className="connection-summary">
+        <div className="card"><span>Public live feeds</span><strong>{providers.filter(p=>p.id==='octopus'||p.id==='pvgis').filter(p=>p.live).length}/2</strong><small>Octopus + PVGIS</small></div>
+        <div className="card"><span>Credentialled feeds</span><strong>{providers.filter(p=>p.id==='givenergy'||p.id==='n3rgy').filter(p=>p.live).length}/2</strong><small>OEM + smart meter</small></div>
+        <div className="card"><span>Site model</span><strong>{site?.site?.modelVersion?'Ready':'Checking'}</strong><small>{site?.site?.modelVersion||'energyos-site-v1'}</small></div>
+      </div>
+
+      <div className="connection-grid">
+        {providers.map(provider=><div className="card connection-card" key={provider.id}>
+          <div className="connection-top">
+            <div className="connection-icon"><PlugZap size={19}/></div>
+            <span className={'connection-state '+(provider.live?'live':'pending')}><i/>{provider.live?'Live':'Setup required'}</span>
+          </div>
+          <h3>{provider.name}</h3>
+          <p>{provider.detail}</p>
+          <div className="connection-metric"><span>Status</span><strong>{provider.metric}</strong></div>
+          <small>{provider.note}</small>
+          {(provider.id==='givenergy'||provider.id==='n3rgy') && <button className="secondary-button full" onClick={()=>setSetup(provider.id)}>Connection setup</button>}
+        </div>)}
+      </div>
+
+      <div className="connection-layout">
+        <div className="card normalized-model">
+          <div className="card-header"><div>Normalised EnergyOS site model</div><Cpu size={18}/></div>
+          <p>Every OEM is translated into the same internal fields so Lifetime Value, optimisation and Engineer AI do not depend on manufacturer-specific data structures.</p>
+          <div className="model-grid">
+            <div><span>Site</span><strong>{site?.site?.name||'Willow House'}</strong></div>
+            <div><span>Model</span><strong>{site?.site?.modelVersion||'energyos-site-v1'}</strong></div>
+            <div><span>Telemetry source</span><strong>{site?.site?.telemetry?.source||'checking'}</strong></div>
+            <div><span>Assets</span><strong>{site?.site?.assets?.length ?? 0}</strong></div>
+          </div>
+        </div>
+        <aside className="card live-source-card">
+          <span className="eyebrow green">Live external data</span>
+          <h3>{octopus?.ok?'Octopus API online':'Checking tariff feed'}</h3>
+          <p>{octopus?.products?.[0]?.displayName ? 'Example active product: '+octopus.products[0].displayName : 'Public product data will appear here when available.'}</p>
+          <div className="live-source-stat"><span>PVGIS expected output</span><strong>{pvgis?.yearlyEnergyKwh?Math.round(pvgis.yearlyEnergyKwh).toLocaleString()+' kWh/yr':'Checking…'}</strong></div>
+        </aside>
+      </div>
+
+      <div className="card connection-architecture">
+        <span className="eyebrow">Connection architecture</span>
+        <div className="architecture-flow">
+          <span>OEM / meter / tariff APIs</span><ArrowRight size={15}/><span>EnergyOS adapters</span><ArrowRight size={15}/><span>Normalised site model</span><ArrowRight size={15}/><span>Lifetime Value + Engineer AI</span>
+        </div>
+      </div>
+
+      {setup && <Modal title={setup==='givenergy'?'Connect GivEnergy':'Connect smart meter'} subtitle="Credentials are deliberately kept out of the browser." onClose={()=>setSetup(null)}>
+        {setup==='givenergy' ? <>
+          <p className="modal-copy">Add the GivEnergy API token and inverter serial to the Vercel server environment. EnergyOS will then call the secure server endpoint and translate the returned telemetry into the normalised site model.</p>
+          <div className="credential-list"><code>GIVENERGY_API_KEY</code><code>GIVENERGY_INVERTER_SERIAL</code></div>
+        </> : <>
+          <p className="modal-copy">The smart-meter connection requires n3rgy commercial access plus a customer-consent flow. Add the server credential first; MPAN-level retrieval should only begin after consent has been recorded.</p>
+          <div className="credential-list"><code>N3RGY_API_KEY</code></div>
+        </>}
+        <div className="diagnostic-note"><ShieldCheck size={18}/><div><strong>Secrets remain server-side.</strong><p>No manufacturer or meter API key is saved in localStorage or exposed in the React bundle.</p></div></div>
+        <button className="primary-button" onClick={()=>setSetup(null)}>Understood</button>
+      </Modal>}
+    </div>
+  );
+}
+
 function LifetimeValue({ profile }) {
   const [scenario, setScenario] = usePersistentState('energyos-lifetime-scenario', 'current');
   const base = profile.type === 'Home'
@@ -897,6 +1037,7 @@ export default function App() {
       if (active === 'opportunities') return <Installer section="opportunities" onViewCustomer={viewCustomer}/>;
       if (active === 'engineer') return <EngineerAI />;
       if (active === 'insights') return <Insights />;
+      if (active === 'connections') return <Connections />;
       return <Installer section="portfolio" onViewCustomer={viewCustomer}/>;
     }
     if (active === 'overview') return <Overview profile={profile} setActive={setActive}/>;
@@ -905,6 +1046,7 @@ export default function App() {
     if (active === 'assets') return <Assets />;
     if (active === 'engineer') return <EngineerAI />;
     if (active === 'tariffs') return <Tariffs />;
+    if (active === 'connections') return <Connections />;
     return <Overview profile={profile} setActive={setActive}/>;
   }, [active, profile, role]);
 
