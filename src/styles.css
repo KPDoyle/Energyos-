@@ -918,3 +918,120 @@ button,input{min-width:0}
   }
   .fleet-value button{font-size:7px}
 }
+
+
+/* Live data connections */
+.connection-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:14px;
+}
+.connection-summary .card{padding:14px}
+.connection-summary span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.55px;color:var(--muted)}
+.connection-summary strong{display:block;font:600 22px/1.1 'Manrope';color:var(--deep);margin:6px 0 3px}
+.connection-summary small{font-size:8px;color:var(--muted)}
+
+.connection-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-bottom:14px;
+}
+.connection-card{padding:16px;min-width:0}
+.connection-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.connection-icon{
+  width:34px;height:34px;border-radius:4px;
+  display:grid;place-items:center;background:#fff4d4;color:#805f00;
+}
+.connection-state{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.45px;
+}
+.connection-state i{width:6px;height:6px;border-radius:50%;display:block}
+.connection-state.live{color:#37754d}
+.connection-state.live i{background:#4f9f68}
+.connection-state.pending{color:#8a6a16}
+.connection-state.pending i{background:var(--lime)}
+.connection-card h3{font:600 13px/1.2 'Manrope';color:var(--deep);margin:13px 0 5px}
+.connection-card p{font-size:8.7px;line-height:1.45;color:var(--muted);min-height:38px}
+.connection-metric{
+  border-top:1px solid var(--line-soft);
+  border-bottom:1px solid var(--line-soft);
+  padding:9px 0;
+  margin:11px 0 8px;
+}
+.connection-metric span{display:block;font-size:7.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.connection-metric strong{display:block;font-size:10px;color:var(--deep);margin-top:3px}
+.connection-card>small{display:block;font-size:7.8px;line-height:1.4;color:var(--muted);min-height:22px}
+.connection-card .secondary-button{margin-top:10px}
+
+.connection-layout{
+  display:grid;
+  grid-template-columns:1.25fr .75fr;
+  gap:10px;
+  margin-bottom:14px;
+}
+.normalized-model,.live-source-card,.connection-architecture{padding:18px}
+.normalized-model>p,.live-source-card p{
+  font-size:9px;line-height:1.5;color:var(--muted);margin:8px 0 14px;
+}
+.model-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;
+}
+.model-grid>div{padding:11px;border-right:1px solid var(--line);background:#fafbfd;min-width:0}
+.model-grid>div:last-child{border-right:0}
+.model-grid span,.live-source-stat span{
+  display:block;font-size:7px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)
+}
+.model-grid strong{display:block;font-size:9px;color:var(--deep);margin-top:4px;overflow-wrap:anywhere}
+.live-source-card h3{font:600 16px/1.2 'Manrope';color:var(--deep);margin:6px 0}
+.live-source-stat{padding:12px;background:#fff8df;border-left:3px solid var(--lime);margin-top:12px}
+.live-source-stat strong{display:block;font:600 18px 'Manrope';color:#725600;margin-top:4px}
+
+.connection-architecture{margin-bottom:10px}
+.architecture-flow{
+  display:grid;
+  grid-template-columns:1fr 18px 1fr 18px 1fr 18px 1.2fr;
+  align-items:center;
+  gap:7px;
+  margin-top:12px;
+}
+.architecture-flow span{
+  min-height:54px;
+  border:1px solid var(--line);
+  background:#fafbfd;
+  display:grid;place-items:center;
+  text-align:center;
+  padding:9px;
+  border-radius:3px;
+  font-size:8.5px;font-weight:700;color:var(--deep);
+}
+.architecture-flow svg{color:#9ca8b7}
+
+.credential-list{display:flex;flex-direction:column;gap:7px;margin:14px 0}
+.credential-list code{
+  display:block;padding:10px 11px;background:#0b1730;color:#f8d878;
+  border-radius:3px;font-size:9px;overflow-wrap:anywhere
+}
+
+@media(max-width:1050px){
+  .connection-grid{grid-template-columns:repeat(2,1fr)}
+  .model-grid{grid-template-columns:repeat(2,1fr)}
+  .model-grid>div:nth-child(2){border-right:0}
+  .model-grid>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+}
+@media(max-width:750px){
+  .connection-summary{grid-template-columns:1fr}
+  .connection-layout{grid-template-columns:1fr}
+  .architecture-flow{grid-template-columns:1fr}
+  .architecture-flow svg{transform:rotate(90deg);justify-self:center}
+}
+@media(max-width:520px){
+  .connection-grid{grid-template-columns:1fr}
+  .model-grid{grid-template-columns:1fr}
+  .model-grid>div{border-right:0;border-bottom:1px solid var(--line)}
+  .model-grid>div:last-child{border-bottom:0}
+  .connection-card p,.connection-card>small{min-height:0}
+}
