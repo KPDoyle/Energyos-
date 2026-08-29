@@ -77,8 +77,10 @@ const profiles = {
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: Grid2X2 },
+  { id: 'lifetime', label: 'Lifetime Value', icon: CircleDollarSign },
   { id: 'optimise', label: 'Optimise', icon: Sparkles },
   { id: 'assets', label: 'Assets', icon: BatteryCharging },
+  { id: 'engineer', label: 'Engineer AI', icon: Cpu },
   { id: 'tariffs', label: 'Tariffs', icon: WalletCards },
   { id: 'insights', label: 'Insights', icon: Activity },
   { id: 'installer', label: 'Installer', icon: Users },
@@ -291,10 +293,18 @@ function Overview({ profile, setActive }) {
       <section className="page-heading">
         <div>
           <span className="eyebrow green">Headroom · EnergyOS</span>
-          <h1>Your energy, optimised.</h1>
-          <p>EnergyOS watches the whole system and turns complexity into clear financial decisions.</p>
+          <h1>Your energy asset operating system.</h1>
+          <p>EnergyOS protects the lifetime financial performance of the whole energy estate — not just today's battery schedule.</p>
         </div>
         <div className="status-pill"><span /> All systems connected</div>
+      </section>
+
+      <section className="lifetime-banner">
+        <div><span>Original 20-year value</span><strong>£38,400</strong></div>
+        <ArrowRight size={18}/>
+        <div><span>Current forecast</span><strong>£35,940</strong></div>
+        <div className="lifetime-gap"><span>Recoverable value</span><strong>£1,940</strong><small>of £2,460 drift</small></div>
+        <button className="secondary-button" onClick={()=>setActive('lifetime')}>Open lifetime account</button>
       </section>
 
       <section className="hero-grid">
@@ -507,6 +517,26 @@ function Assets() {
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [lastRefresh, setLastRefresh] = usePersistentState('energyos-last-refresh', '34 sec ago');
   const [syncing, setSyncing] = useState(false);
+  const warrantyPack = () => {
+    const content = [
+      'HEADROOM ENERGYOS — WARRANTY EVIDENCE PACK',
+      '',
+      'Asset: ' + selected.name,
+      'Model: ' + selected.model,
+      'Health score: ' + selected.health + '/100',
+      'Status: ' + selected.status,
+      'Performance: ' + selected.meta,
+      'Warranty remaining: ' + selected.warranty,
+      'Last telemetry: ' + lastRefresh,
+      'Fault codes: ' + (selected.status==='Watch' ? '1 advisory' : 'None'),
+      '',
+      'EnergyOS assessment:',
+      selected.status==='Watch'
+        ? 'Small performance drift detected. No evidence of operation outside the recorded warranty-safe envelope.'
+        : 'Telemetry remains within expected operating limits and the recorded warranty-safe envelope.',
+    ].join('\n');
+    downloadFile(selected.name.replaceAll(' ','-') + '-warranty-evidence.txt', content);
+  };
   const refresh = () => {
     setSyncing(true);
     setTimeout(()=>{ setLastRefresh(new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})); setSyncing(false); }, 650);
@@ -536,7 +566,7 @@ function Assets() {
           <div><span>Performance</span><strong>{selected.meta}</strong></div><div><span>Warranty</span><strong>{selected.warranty}</strong></div>
         </div>
         <div className="diagnostic-note"><ShieldCheck size={18}/><div><strong>No critical intervention required.</strong><p>{selected.status==='Watch'?'EnergyOS has detected a small performance drift. Continue monitoring and schedule service only if the economic threshold is reached.':'Telemetry is within expected operating limits and warranty-safe thresholds.'}</p></div></div>
-        <button className="primary-button" onClick={()=>setDiagnosticsOpen(false)}>Close diagnostics</button>
+        <div className="modal-actions"><button className="secondary-button" onClick={warrantyPack}>Download warranty evidence</button><button className="primary-button" onClick={()=>setDiagnosticsOpen(false)}>Close diagnostics</button></div>
       </Modal>}
     </div>
   );
@@ -666,6 +696,122 @@ function Installer() {
   );
 }
 
+
+function LifetimeValue({ profile }) {
+  const [scenario, setScenario] = usePersistentState('energyos-lifetime-scenario', 'current');
+  const base = profile.type === 'Home'
+    ? {design:38400,current:35940,recoverable:1940,drift:2460}
+    : profile.type === 'SME'
+      ? {design:286000,current:258400,recoverable:22100,drift:27600}
+      : {design:1120000,current:1013000,recoverable:88400,drift:107000};
+  const recovered = scenario==='recovered' ? base.current + base.recoverable : base.current;
+  const breakdown = profile.type === 'Home'
+    ? [['Tariff drift',610],['Solar soiling',380],['Lower self-consumption',520],['Battery degradation',350],['Scheduling loss',600]]
+    : profile.type === 'SME'
+      ? [['Tariff drift',8200],['Generation underperformance',5100],['Demand profile drift',6400],['Asset degradation',3300],['Scheduling loss',4600]]
+      : [['Tariff drift',31000],['Generation underperformance',21800],['Demand profile drift',17600],['Asset degradation',14200],['Scheduling loss',22400]];
+  return (
+    <div className="page">
+      <section className="page-heading">
+        <div><span className="eyebrow green">Lifetime energy account</span><h1>Are you getting the value you were promised?</h1><p>EnergyOS keeps a financial record of design intent, actual performance, degradation, tariffs, maintenance and recoverable value across the asset life.</p></div>
+        <div className="segmented"><button className={scenario==='current'?'active':''} onClick={()=>setScenario('current')}>Current</button><button className={scenario==='recovered'?'active':''} onClick={()=>setScenario('recovered')}>After actions</button></div>
+      </section>
+
+      <section className="lifetime-hero card">
+        <div className="lifetime-number"><span>Original design value</span><strong>£{base.design.toLocaleString()}</strong><small>20-year model</small></div>
+        <ArrowRight size={22}/>
+        <div className="lifetime-number"><span>{scenario==='recovered'?'Recovered forecast':'Current forecast'}</span><strong>£{recovered.toLocaleString()}</strong><small>{scenario==='recovered'?'after queued actions':'based on observed performance'}</small></div>
+        <div className="lifetime-recovery"><span>Recoverable now</span><strong>£{base.recoverable.toLocaleString()}</strong><small>{Math.round(base.recoverable/base.drift*100)}% of identified drift</small></div>
+      </section>
+
+      <div className="lifetime-grid">
+        <div className="card lifetime-breakdown">
+          <div className="card-header"><div>Where value has drifted</div><Activity size={18}/></div>
+          {breakdown.map(([label,value])=><div className="drift-row" key={label}><span>{label}</span><i><b style={{width:Math.min(100,(value/base.drift)*220)+'%'}}/></i><strong>£{value.toLocaleString()}</strong></div>)}
+        </div>
+        <div className="card lifecycle-card">
+          <span className="eyebrow">Asset lifecycle</span>
+          <h2>EnergyOS remembers what changed.</h2>
+          <div className="lifecycle-list">
+            <div><b>01</b><span><strong>Design</strong><small>Expected output, savings and payback captured</small></span><Check size={16}/></div>
+            <div><b>02</b><span><strong>Commission</strong><small>Installed assets and warranty conditions recorded</small></span><Check size={16}/></div>
+            <div><b>03</b><span><strong>Operate</strong><small>Actual generation, consumption and tariffs compared</small></span><Activity size={16}/></div>
+            <div><b>04</b><span><strong>Maintain</strong><small>Economic service triggers and evidence packs</small></span><ShieldCheck size={16}/></div>
+            <div><b>05</b><span><strong>Upgrade</strong><small>Battery, EV and heat-pump opportunities ranked by ROI</small></span><Sparkles size={16}/></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="section-heading"><div><span className="eyebrow green">Next best actions</span><h2>Recover £{base.recoverable.toLocaleString()} of lifetime value</h2></div></div>
+      <div className="lifetime-actions">
+        <div className="card"><span>01</span><div><strong>Battery scheduling</strong><p>Move charging to the lowest-cost import window without breaching warranty rules.</p></div><b>£286/yr</b></div>
+        <div className="card"><span>02</span><div><strong>Export tariff review</strong><p>Keep import and export economics separate and review at the right date.</p></div><b>£238/yr</b></div>
+        <div className="card"><span>03</span><div><strong>Condition-led maintenance</strong><p>Delay panel cleaning until the predicted energy recovery exceeds service cost.</p></div><b>£160/yr</b></div>
+      </div>
+    </div>
+  );
+}
+
+function EngineerAI() {
+  const [caseStatus, setCaseStatus] = usePersistentState('energyos-engineer-case', 'Monitoring');
+  const [briefGenerated, setBriefGenerated] = usePersistentState('energyos-engineer-brief', false);
+  const createBrief = () => {
+    const brief = [
+      'HEADROOM ENERGYOS — ENGINEER BRIEF',
+      '',
+      'Site: Willow House',
+      'Asset: Hybrid inverter',
+      'Issue: Repeated grid over-voltage between 11:30 and 14:00',
+      'Likely cause: Local grid voltage excursion',
+      'Equipment failure probability: Low',
+      'Estimated revenue impact: £1.84/day',
+      'Recommended action: Continue monitoring for 7 days; engineer visit only if threshold persists',
+      'Skills required if dispatched: Qualified electrician',
+      'Parts expected: None',
+      'Expected visit duration: 45 minutes',
+      '',
+      'Evidence: telemetry trend, event history, warranty-safe operating record.'
+    ].join('\n');
+    downloadFile('EnergyOS-engineer-brief-Willow-House.txt', brief);
+    setBriefGenerated(true);
+    setCaseStatus('Brief ready');
+  };
+  return (
+    <div className="page">
+      <section className="page-heading"><div><span className="eyebrow green">Energy Engineer AI</span><h1>Diagnose before you dispatch.</h1><p>EnergyOS combines telemetry, manuals, warranty constraints and economic impact to decide whether a site needs intervention — and scopes the job when it does.</p></div><span className="status-pill"><span/> AI triage active</span></section>
+
+      <div className="engineer-grid">
+        <div className="card engineer-case">
+          <div className="card-header"><div>Live diagnostic case</div><Cpu size={18}/></div>
+          <span className="eyebrow green">Willow House · Hybrid inverter</span>
+          <h2>Repeated grid over-voltage</h2>
+          <p>Events cluster between 11:30 and 14:00 while array output is high. Inverter electrical telemetry is otherwise normal.</p>
+          <div className="engineer-answer">
+            <div><span>Likely cause</span><strong>Local grid voltage excursion</strong></div>
+            <div><span>Failure probability</span><strong>Low</strong></div>
+            <div><span>Revenue impact</span><strong>£1.84/day</strong></div>
+            <div><span>Visit required</span><strong>Not yet</strong></div>
+          </div>
+          <div className="diagnostic-note"><ShieldCheck size={18}/><div><strong>Warranty-safe operation confirmed.</strong><p>No evidence currently suggests the inverter itself has failed. Continue monitoring for seven days before dispatch.</p></div></div>
+          <div className="modal-actions"><button className="secondary-button" onClick={()=>setCaseStatus('7-day watch')}>Start 7-day watch</button><button className="primary-button" onClick={createBrief}>Generate engineer brief</button></div>
+          <div className="case-status"><span>Case status</span><strong>{caseStatus}</strong>{briefGenerated&&<Check size={15}/>}</div>
+        </div>
+
+        <aside className="engineer-side">
+          <div className="card"><span className="eyebrow">Triage economics</span><strong className="engineer-metric">39%</strong><p>of service cases resolved remotely in the current installer fleet.</p></div>
+          <div className="card"><span className="eyebrow">Avoided dispatch</span><strong className="engineer-metric">14</strong><p>engineer visits avoided this month through evidence-led diagnosis.</p></div>
+          <div className="card"><span className="eyebrow">Average diagnosis</span><strong className="engineer-metric">6m 18s</strong><p>from alert to scoped recommendation.</p></div>
+        </aside>
+      </div>
+
+      <div className="section-heading"><div><span className="eyebrow">AI service workflow</span><h2>From telemetry to technician instruction</h2></div></div>
+      <div className="service-flow">
+        {['Detect anomaly','Diagnose cause','Check warranty','Calculate impact','Decide intervention','Scope technician'].map((x,i)=><div className="card" key={x}><b>{String(i+1).padStart(2,'0')}</b><span>{x}</span>{i<5&&<ArrowRight size={14}/>}</div>)}
+      </div>
+    </div>
+  );
+}
+
 function EmptyPage({ title }) {
   return <div className="page"><section className="page-heading"><div><span className="eyebrow green">EnergyOS</span><h1>{title}</h1></div></section></div>;
 }
@@ -698,8 +844,10 @@ export default function App() {
 
   const content = useMemo(() => {
     if (active === 'overview') return <Overview profile={profile} setActive={setActive}/>;
+    if (active === 'lifetime') return <LifetimeValue profile={profile} />;
     if (active === 'optimise') return <Optimise />;
     if (active === 'assets') return <Assets />;
+    if (active === 'engineer') return <EngineerAI />;
     if (active === 'tariffs') return <Tariffs />;
     if (active === 'insights') return <Insights />;
     if (active === 'installer') return <Installer />;
